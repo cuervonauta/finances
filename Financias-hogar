@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Mis Finanzas | Control Mensual</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%234f46e5%22 rx=%2220%22 ry=%2220%22></rect><text x=%2250%22 y=%2250%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 font-size=%2260%22>💸</text></svg>">
+
+    <!-- React y Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; background-color: #f3f4f6; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, Component } = React;
+        const USD_VALUE = 950; 
+
+        class ErrorBoundary extends Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            componentDidCatch(error, errorInfo) { console.error("Error App:", error, errorInfo); }
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                            <h1 className="text-2xl font-bold text-red-600 mb-2">¡Ups! Algo salió mal</h1>
+                            <p className="text-sm text-gray-500 mb-4">Error: {this.state.error?.toString()}</p>
+                            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">♻️ Reiniciar App</button>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        const Icon = ({ path, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{ __html: path }} />
+        );
+        
+        const ICONS = {
+            Wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+            Home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+            CreditCard: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+            ShoppingCart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+            Coffee: '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/>',
+            MapPin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+            Plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+            Trash2: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+            CheckCircle2: '<path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/>',
+            Circle: '<circle cx="12" cy="12" r="10"/>',
+            RotateCcw: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+            DollarSign: '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+            Smartphone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+            ShieldCheck: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>',
+            Building2: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+            FolderPlus: '<path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+            Edit2: '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+            Calendar: '<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+            Lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+            Unlock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+            ChevronDown: '<path d="m6 9 6 6 6-6"/>',
+            ChevronUp: '<path d="m18 15-6-6-6 6"/>',
+            PiggyBank: '<path d="M19 5c-1.5 0-2.8.6-3.5 1.3a1 1 0 0 1-.9.7h-2.1c-.9 0-1.7.5-2.3 1.3a1 1 0 0 1-1.9-.7L10 3a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2"/><path d="M5.5 8.5C3.5 9 2 11 2 13.5a2.5 2.5 0 0 0 2.5 2.5h15c1.1 0 2 .9 2 2v1"/><path d="M14 13h2"/><path d="M16 17v2a2 2 0 0 1-2 2h-1.5a2 2 0 0 1-2-2v-1"/><path d="M8 16v2a2 2 0 0 1-2 2H4.5a2 2 0 0 1-2-2v-1"/>',
+            Users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+            ArrowLeft: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+            ChevronRight: '<path d="m9 18 6-6-6-6"/>',
+            CalendarDays: '<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>',
+            Cloud: '<path d="M17.5 19c0-1.7-1.3-3-3-3h-1.1c-.5-2.2-2.3-4-4.4-4-2.8 0-5 2.2-5 5 .5 0 1 0 1.5.1C6.7 15.6 8 14 9.5 14c1.8 0 3.3 1.3 3.5 3h.5c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5h-8"/><path d="M5 19h14.5c2.5 0 4.5-2 4.5-4.5S22 10 19.5 10c-.4 0-.7.1-1.1.2C17.7 7.2 14.8 5 11.5 5 7 5 3.3 8.3 2.5 12.6A4.5 4.5 0 0 0 5 19Z"/>',
+            Check: '<path d="M20 6 9 17l-5-5"/>',
+            Loader2: '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
+            Settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+            X: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+            BarChart3: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+            PieChart: '<path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+            Download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+            Upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+            FileJson: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1"/><path d="M14 16a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"/>',
+            Info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+            LayoutDashboard: '<rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />',
+            Banknote: '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+            List: '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>',
+            AlertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
+        };
+
+        const Icons = Object.keys(ICONS).reduce((acc, key) => {
+            acc[key] = (props) => <Icon path={ICONS[key]} {...props} />;
+            return acc;
+        }, {});
+
+        const { 
+            Wallet, Home, CreditCard, ShoppingCart, Coffee, MapPin, Plus, Trash2, 
+            CheckCircle2, Circle, RotateCcw, DollarSign, Smartphone, ShieldCheck, 
+            Building2, FolderPlus, Edit2, Calendar, Lock, Unlock, ChevronDown, ChevronUp,
+            PiggyBank, Users, ArrowLeft, ChevronRight, CalendarDays, Cloud, 
+            Check, Loader2, Settings, X, BarChart3, PieChart, Download, Upload, FileJson, Info, LayoutDashboard, Banknote,
+            List, AlertTriangle
+        } = Icons; // Added List and AlertTriangle icons
+
+        const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
+        const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        // --- COMPONENTES ---
+        const SimplePieChart = ({ data }) => {
+            const total = data.reduce((acc, item) => acc + item.value, 0);
+            if (total === 0) return <div className="flex flex-col items-center justify-center h-48 text-gray-400"><PieChart size={32} className="mb-2 opacity-50"/><p className="text-xs">Sin datos</p></div>;
+            return (
+                <div className="flex flex-col items-center">
+                    <div className="relative w-40 h-40 mb-4">
+                        <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
+                            {data.map((item, index) => {
+                                const percent = item.value / total;
+                                const start = 0; 
+                                let cumulativePercent = 0;
+                                for(let i=0; i<index; i++) cumulativePercent += data[i].value / total;
+                                
+                                const startPercent = cumulativePercent;
+                                const endPercent = startPercent + percent;
+
+                                const x1 = 50 + 50 * Math.cos(2 * Math.PI * startPercent);
+                                const y1 = 50 + 50 * Math.sin(2 * Math.PI * startPercent);
+                                const x2 = 50 + 50 * Math.cos(2 * Math.PI * endPercent);
+                                const y2 = 50 + 50 * Math.sin(2 * Math.PI * endPercent);
+                                const largeArc = percent > 0.5 ? 1 : 0;
+                                const pathData = percent === 1 ? "M 50 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0" : `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                                return <path key={index} d={pathData} fill={item.color} stroke="white" strokeWidth="1" />;
+                            })}
+                        </svg>
+                    </div>
+                    <div className="w-full space-y-1">
+                        {data.map((item, index) => (
+                            <div key={index} className="flex justify-between items-center text-xs">
+                                <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></span><span className="text-gray-600">{item.label}</span></div>
+                                <span className="font-bold text-gray-800">{formatCurrency(item.value)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const ProgressBar = ({ label, value, total, colorClass = "bg-indigo-500" }) => {
+            const percent = total > 0 ? Math.min((value / total) * 100, 100) : 0;
+            return (
+                <div className="mb-3">
+                    <div className="flex justify-between text-xs mb-1"><span className="font-bold text-gray-600">{label}</span><span className="text-gray-500">{formatCurrency(value)} / {formatCurrency(total)}</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${colorClass}`} style={{ width: `${percent}%` }}></div></div>
+                </div>
+            );
+        };
+
+        const SettingsModal = ({ isOpen, onClose, url, onSave, currentData, onImport }) => {
+            const [inputUrl, setInputUrl] = useState(url || '');
+            const fileInputRef = useRef(null);
+            if (!isOpen) return null;
+            const handleExport = () => {
+                const dataStr = JSON.stringify(currentData, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `finanzas_backup_${new Date().toISOString().slice(0,10)}.json`;
+                link.click();
+            };
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        if(window.confirm("¿Importar respaldo?")) { onImport(json); onClose(); }
+                    } catch (err) { alert("Error al leer archivo JSON"); }
+                };
+                reader.readAsText(file);
+            };
+            return (
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                        <div className="flex justify-between items-center mb-6"><h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><Settings size={20} /> Configuración</h3><button onClick={onClose}><X size={24} className="text-gray-400"/></button></div>
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <button onClick={handleExport} className="flex flex-col items-center gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600"><Download size={20}/><span className="text-xs font-bold">Exportar</span></button>
+                            <button onClick={() => fileInputRef.current.click()} className="flex flex-col items-center gap-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-600"><Upload size={20}/><span className="text-xs font-bold">Importar</span><input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange}/></button>
+                        </div>
+                        <div className="space-y-2 mb-6">
+                            <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-2"><Cloud size={14}/> Google Sheets Sync</h4>
+                            <input type="text" value={inputUrl} onChange={(e) => setInputUrl(e.target.value)} placeholder="URL del Script..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"/>
+                        </div>
+                        <div className="flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Cerrar</button><button onClick={() => { onSave(inputUrl); onClose(); }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Guardar</button></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const EditableRow = ({ item, onToggle, onAmountChange, onNameChange, showDelete, onDelete, readOnly }) => (
+            <div className={`flex items-center justify-between py-3 border-b border-gray-100 last:border-0 ${readOnly ? 'opacity-80' : ''}`}>
+                <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                    <button onClick={onToggle} disabled={readOnly} className="shrink-0 focus:outline-none">{item.paid ? <CheckCircle2 className="text-green-500 fill-green-50" size={24}/> : <Circle className="text-gray-300" size={24}/>}</button>
+                    <div className="flex flex-col flex-1 min-w-0"><input type="text" value={item.name} onChange={(e) => onNameChange && onNameChange(e.target.value)} disabled={!onNameChange || readOnly} className={`text-sm font-medium bg-transparent border-none p-0 w-full focus:ring-0 truncate ${item.paid ? 'text-gray-400 line-through' : 'text-gray-800'} disabled:text-gray-700`} /></div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    <div className="relative"><span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span><input type="number" value={item.amount || ''} disabled={readOnly} onChange={(e) => onAmountChange(e.target.value)} className={`w-20 text-right pl-3 py-1 bg-transparent border-b border-transparent focus:outline-none focus:border-indigo-500 font-bold text-sm tabular-nums ${item.paid ? 'text-gray-400' : 'text-gray-900'} disabled:cursor-not-allowed`} placeholder="0"/></div>
+                    {showDelete && !readOnly && <button onClick={onDelete} className="text-red-300 hover:text-red-500 px-1"><Trash2 size={16}/></button>}
+                </div>
+            </div>
+        );
+
+        const DetailedCreditCardRow = ({ item, onUpdate, onDelete, readOnly }) => {
+            const [expanded, setExpanded] = useState(false);
+            const isLine = item.type === 'linea';
+            const isDollar = item.type === 'tc_dolares';
+            
+            const totalDebt = Number(item.totalDebt) || 0;
+            const creditLimit = Number(item.creditLimit) || 0;
+            const monthlyQuota = Number(item.monthlyQuota) || 0;
+            const payedAmount = Number(item.payedAmount) || 0;
+            
+            const effectiveDebt = isLine ? (totalDebt - payedAmount) : (monthlyQuota - payedAmount);
+            const remaining = Math.max(0, effectiveDebt);
+            const isPaidComplete = remaining <= 0 && (isLine ? totalDebt > 0 : monthlyQuota > 0);
+
+            let statusContent;
+
+            if (item.status === 'no_debt') {
+                statusContent = <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">SIN DEUDA</span>;
+            } else if (isLine) {
+                const currentUsage = Math.max(0, totalDebt - payedAmount);
+                statusContent = (
+                    <p className="text-xs text-gray-500 font-medium">
+                        Uso: <span className="text-gray-700 font-bold">{formatCurrency(currentUsage)}</span> de {formatCurrency(creditLimit)}
+                    </p>
+                );
+            } else {
+                if (monthlyQuota === 0) {
+                     statusContent = <p className="text-xs text-gray-400 font-medium">Estado: Sin cupo utilizado</p>;
+                } else if (remaining <= 0) {
+                    statusContent = <p className="text-xs font-bold text-green-600">Estado: Pagado</p>;
+                } else if (payedAmount > 0) {
+                    statusContent = <p className="text-xs font-bold text-amber-500">Estado: Abonado (Falta: {isDollar ? `USD ${remaining}` : formatCurrency(remaining)})</p>;
+                } else {
+                    statusContent = <p className="text-xs font-bold text-red-600">Estado: En Deuda ({isDollar ? `USD ${remaining}` : formatCurrency(remaining)})</p>;
+                }
+            }
+
+            return (
+                <div className={`bg-gray-50 rounded-xl p-3 mb-3 border border-gray-200 transition-all ${readOnly ? 'opacity-80' : ''}`}>
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => !readOnly && setExpanded(!expanded)}>
+                            {item.status === 'no_debt' ? 
+                                <ShieldCheck className="text-blue-500" size={24}/> : 
+                                isPaidComplete ? <CheckCircle2 className="text-green-500" size={24}/> : 
+                                <CreditCard className="text-rose-400" size={24}/>
+                            }
+                            <div>
+                                <p className="font-bold text-gray-800 text-sm">{item.name}</p>
+                                {statusContent}
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                             {!readOnly && (
+                                <button 
+                                    onClick={() => setExpanded(!expanded)} 
+                                    className={`p-1 rounded-full transition ${expanded ? 'bg-gray-200 text-gray-700' : 'text-gray-400 hover:bg-gray-100'}`}
+                                >
+                                    {expanded ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+                                </button>
+                            )}
+                            {!readOnly && (
+                                <button onClick={onDelete} className="text-red-200 hover:text-red-500 p-1">
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {expanded && item.status !== 'no_debt' && (
+                        <div className="grid grid-cols-2 gap-3 text-xs mt-3 pt-3 border-t border-gray-200 animate-in slide-in-from-top-2 duration-200">
+                            <div>
+                                <label className="text-gray-400 font-bold block mb-1">Deuda Total {isLine && '(Uso)'}</label>
+                                <div className="relative">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">{isDollar ? '$' : '$'}</span>
+                                    <input type="number" disabled={readOnly} value={item.totalDebt || ''} onChange={(e) => onUpdate('totalDebt', e.target.value)} className="w-full bg-white border border-gray-200 rounded p-1.5 pl-4 focus:outline-none focus:border-rose-400" placeholder="0"/>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label className="text-gray-400 font-bold block mb-1">{isLine ? 'Cupo Total' : 'Cuota Mes'}</label>
+                                <div className="relative">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">{isDollar ? '$' : '$'}</span>
+                                    <input 
+                                        type="number" 
+                                        disabled={readOnly} 
+                                        value={isLine ? (item.creditLimit || '') : (item.monthlyQuota || '')} 
+                                        onChange={(e) => isLine ? onUpdate('creditLimit', e.target.value) : onUpdate('monthlyQuota', e.target.value)} 
+                                        className="w-full bg-white border border-rose-200 rounded p-1.5 pl-4 text-rose-600 font-bold focus:outline-none focus:border-rose-500" 
+                                        placeholder="0" 
+                                    />
+                                </div>
+                            </div>
+
+                            {!isLine && (
+                                <div>
+                                    <label className="text-gray-400 font-bold block mb-1">Fecha Corte</label>
+                                    <input type="date" disabled={readOnly} value={item.cutoffDate || ''} onChange={(e) => onUpdate('cutoffDate', e.target.value)} className="w-full bg-white border border-gray-200 rounded p-1.5 text-gray-600 focus:outline-none focus:border-rose-400"/>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-gray-400 font-bold block mb-1">{isLine ? 'Pago Realizado' : 'Abonado'}</label>
+                                <div className="relative">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">{isDollar ? '$' : '$'}</span>
+                                    <input type="number" disabled={readOnly} value={item.payedAmount || ''} onChange={(e) => onUpdate('payedAmount', e.target.value)} className="w-full bg-white border border-emerald-200 rounded p-1.5 pl-4 text-emerald-600 font-bold focus:outline-none focus:border-emerald-500" placeholder="0"/>
+                                </div>
+                            </div>
+
+                            <div className="col-span-2 mt-2">
+                                <button 
+                                    onClick={() => onUpdate('status', 'no_debt')}
+                                    className="w-full py-2 bg-blue-50 text-blue-600 font-bold rounded-lg text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                                >
+                                    <ShieldCheck size={14}/> Marcar como "Sin Deuda" este mes
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {expanded && item.status === 'no_debt' && (
+                         <div className="mt-3 pt-3 border-t border-gray-200">
+                             <button onClick={() => onUpdate('status', 'pending')} className="w-full py-2 bg-gray-100 text-gray-600 font-bold rounded-lg text-xs hover:bg-gray-200">Reactivar Deuda</button>
+                         </div>
+                    )}
+                </div>
+            );
+        };
+
+        const SectionCard = ({ title, icon: Icon, total, paid, children, colorClass, headerClass, onDeleteSection, readOnly }) => {
+            const hasPaidProp = typeof paid !== 'undefined';
+            const remaining = Math.max(0, total - (paid || 0));
+
+            return (
+                <section className={`rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4 ${colorClass}`}>
+                    <div className={`px-4 py-3 border-b border-gray-100 flex justify-between items-start ${headerClass}`}>
+                        <div className="flex items-center gap-2 mt-1"><Icon size={18} /><span className="font-bold">{title}</span></div>
+                        
+                        <div className="flex flex-col items-end gap-1">
+                             {/* Valor Principal: El Restante (Lo que FALTA) */}
+                            <span className="text-lg font-bold leading-none">
+                                {formatCurrency(hasPaidProp ? remaining : total)}
+                            </span>
+                            
+                            {hasPaidProp && (
+                                <div className="flex flex-col items-end text-[10px] opacity-80 font-medium">
+                                     <span>Pagado: {formatCurrency(paid)}</span>
+                                     <span>Total: {formatCurrency(total)}</span>
+                                </div>
+                            )}
+
+                            {onDeleteSection && !readOnly && <button onClick={onDeleteSection} className="opacity-50 hover:opacity-100 mt-1"><Trash2 size={16}/></button>}
+                        </div>
+                    </div>
+                    <div className={`p-4 ${readOnly ? 'pointer-events-none opacity-80' : ''}`}>{children}</div>
+                </section>
+            );
+        };
+
+        const CategoryButton = ({ title, icon: Icon, color, onClick, total, subtitle, showAmount = true }) => (
+            <button onClick={onClick} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all active:scale-95 mb-3">
+                <div className="flex items-center gap-3"><div className={`p-3 rounded-xl ${color.bg} ${color.text}`}><Icon size={24}/></div><div className="text-left"><h3 className="font-bold text-gray-800">{title}</h3><p className="text-xs text-gray-400">{subtitle || "Ver detalles"}</p></div></div>
+                <div className="flex items-center gap-2">{showAmount && <span className="text-xs font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded">{formatCurrency(total)}</span>}<ChevronRight className="text-gray-300" size={20}/></div>
+            </button>
+        );
+
+        // --- INICIALIZACIÓN ---
+        // Agregamos 'lists' dentro de 'supermarket'
+        const INITIAL_DATA = { isClosed: false, income: 0, extraIncome: 0, supermarket: { budget: 0, items: [], lists: [] }, hogar: [{ id: 'h1', name: 'Arriendo', amount: 0, paid: false }, { id: 'h2', name: 'Gasto Común', amount: 0, paid: false }, { id: 'h3', name: 'Entel Móvil', amount: 0, paid: false }, { id: 'h4', name: 'Entel Hogar', amount: 0, paid: false }, { id: 'h5', name: 'Agua', amount: 0, paid: false }, { id: 'h6', name: 'Luz Enel', amount: 0, paid: false }, { id: 'h7', name: 'Gasolina', amount: 0, paid: false }, { id: 'h8', name: 'Tag', amount: 0, paid: false }, { id: 'h9', name: 'HDI Seguros', amount: 0, paid: false }, { id: 'h10', name: 'Crédito Consumo Auto', amount: 0, paid: false }, { id: 'h11', name: 'Mascotas', amount: 0, paid: false }], subscriptions: [{ id: 's1', name: 'Netflix', amount: 0, paid: false }, { id: 's2', name: 'Spotify', amount: 0, paid: false }, { id: 's3', name: 'Disney', amount: 0, paid: false }, { id: 's4', name: 'MAX', amount: 0, paid: false }, { id: 's5', name: 'Adobe Suite', amount: 0, paid: false }, { id: 's6', name: 'Youtube Jose', amount: 0, paid: false }, { id: 's7', name: 'Apple TV', amount: 0, paid: false }, { id: 's8', name: 'Youtube Papa', amount: 0, paid: false }, { id: 's9', name: 'Cuota Muebles Terraza', amount: 0, paid: false }, { id: 's10', name: 'ChatGPT', amount: 0, paid: false }, { id: 's11', name: 'Google One', amount: 0, paid: false }], creditCards: [], customModules: [{ id: 'default-chillan', name: 'Gastos Chillán', items: [{ id: 'ch1', name: 'Gas', amount: 0, paid: false }, { id: 'ch2', name: 'Movistar', amount: 0, paid: false }, { id: 'ch3', name: 'Agua', amount: 0, paid: false }, { id: 'ch4', name: 'Luz', amount: 0, paid: false }] }], savings: [{ id: 'sav1', name: 'Fondo de Emergencia', amount: 0, paid: false }], loansGiven: [], streetFood: [] };
+
+        const App = () => {
+            const today = new Date();
+            const [viewDate, setViewDate] = useState({ month: today.getMonth(), year: today.getFullYear() });
+            const [currentView, setCurrentView] = useState('dashboard');
+            const [chartTab, setChartTab] = useState('general');
+            const [data, setData] = useState(INITIAL_DATA);
+            const [isLoaded, setIsLoaded] = useState(false);
+            const [sheetUrl, setSheetUrl] = useState('');
+            const [syncStatus, setSyncStatus] = useState('idle');
+            const [showSettings, setShowSettings] = useState(false);
+            
+            // Estado para manejar la Lista Activa de Supermercado
+            const [activeListId, setActiveListId] = useState(null);
+            const [newProduct, setNewProduct] = useState({ name: '', price: '' });
+
+            const debounceRef = useRef(null);
+
+            // Inputs
+            const [newStreetItem, setNewStreetItem] = useState({ name: '', amount: '' });
+            const [newMarketItem, setNewMarketItem] = useState({ name: '', amount: '' });
+            const [newHogarItem, setNewHogarItem] = useState({ name: '', amount: '' });
+            const [newSubscriptionItem, setNewSubscriptionItem] = useState({ name: '', amount: '' });
+            const [newSavingsItem, setNewSavingsItem] = useState({ name: '', amount: '' });
+            const [newLoanItem, setNewLoanItem] = useState({ name: '', amount: '' });
+            const [newBankName, setNewBankName] = useState('');
+            const [newBankTypes, setNewBankTypes] = useState({ pesos: true, dolares: true, linea: true });
+            const [isAddingBank, setIsAddingBank] = useState(false);
+            const [customModuleInputs, setCustomModuleInputs] = useState({});
+
+            const getStorageKey = (m, y) => `finance-v18-${y}-${m}`;
+
+            // Handlers definidos ANTES de ser usados
+            const toggleMonthStatus = () => { 
+                if(window.confirm(`¿Estás seguro de ${data.isClosed ? "abrir" : "cerrar"} el mes?`)) {
+                    setData({ ...data, isClosed: !data.isClosed }); 
+                }
+            };
+
+            const resetMonth = () => { 
+                if (data.isClosed) return; 
+                if(!window.confirm("¿Reiniciar valores?")) return; 
+                const zeroList = (list) => list.map(i => ({...i, amount: 0, paid: false})); 
+                const zeroCards = (list) => list.map(i => ({...i, monthlyQuota: 0, payedAmount: 0, status: 'pending'})); 
+                const zeroModules = (modules) => modules.map(m => ({ ...m, items: m.items.map(i => ({...i, amount: 0, paid: false})) })); 
+                setData({ 
+                    ...data, 
+                    income: data.income,
+                    extraIncome: 0,
+                    supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] }, 
+                    hogar: zeroList(data.hogar), 
+                    subscriptions: zeroList(data.subscriptions), 
+                    creditCards: zeroCards(data.creditCards), 
+                    customModules: zeroModules(data.customModules), 
+                    savings: zeroList(data.savings || []), 
+                    loansGiven: [], 
+                    streetFood: [] 
+                }); 
+            };
+            
+            const updateList = (k, fn) => !data.isClosed && setData({...data, [k]: fn(data[k] || [])});
+            const addBank = () => { 
+                if (!newBankName.trim()) return; 
+                const ts = Date.now(); 
+                const newCards = []; 
+                if (newBankTypes.pesos) newCards.push({ id: `tc-${ts}-1`, bank: newBankName, name: 'TC Pesos', type: 'tc_pesos', totalDebt: 0, monthlyQuota: 0, payedAmount: 0, status: 'pending' }); 
+                if (newBankTypes.dolares) newCards.push({ id: `tc-${ts}-2`, bank: newBankName, name: 'TC Dólares', type: 'tc_dolares', totalDebt: 0, monthlyQuota: 0, payedAmount: 0, status: 'pending' }); 
+                if (newBankTypes.linea) newCards.push({ id: `tc-${ts}-3`, bank: newBankName, name: 'Línea Crédito', type: 'linea', totalDebt: 0, payedAmount: 0, status: 'pending' }); 
+                updateList('creditCards', list => [...list, ...newCards]); 
+                setNewBankName(''); 
+                setIsAddingBank(false); 
+            };
+
+            // Efectos
+            useEffect(() => {
+                const savedUrl = localStorage.getItem('google_sheet_script_url');
+                if(savedUrl) setSheetUrl(savedUrl);
+                const key = getStorageKey(viewDate.month, viewDate.year);
+                const savedData = localStorage.getItem(key);
+                if(savedData) {
+                    try {
+                        const parsed = JSON.parse(savedData);
+                        setData({ ...INITIAL_DATA, ...parsed }); 
+                    } catch(e) { setData(INITIAL_DATA); }
+                } else {
+                    if(data.creditCards.length > 0) {
+                        const template = { 
+                            ...INITIAL_DATA, 
+                            creditCards: data.creditCards.map(c => ({
+                                ...c, 
+                                monthlyQuota: 0, 
+                                payedAmount: 0, 
+                                status: 'pending'
+                            })) 
+                        };
+                        setData(template);
+                    } else {
+                        setData(INITIAL_DATA);
+                    }
+                }
+                setIsLoaded(true);
+            }, [viewDate]);
+
+            useEffect(() => {
+                if(isLoaded) {
+                    const key = getStorageKey(viewDate.month, viewDate.year);
+                    localStorage.setItem(key, JSON.stringify(data));
+                    if(sheetUrl) {
+                        setSyncStatus('syncing');
+                        if(debounceRef.current) clearTimeout(debounceRef.current);
+                        debounceRef.current = setTimeout(async () => {
+                             try {
+                                await fetch(sheetUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: MONTHS[viewDate.month], year: viewDate.year, ...data }) });
+                                setSyncStatus('success'); setTimeout(() => setSyncStatus('idle'), 2000);
+                            } catch(e) { setSyncStatus('error'); }
+                        }, 3000);
+                    }
+                }
+            }, [data, isLoaded]);
+
+            if (!isLoaded) return <div className="h-screen flex items-center justify-center text-gray-500">Cargando...</div>;
+
+            const isReadOnly = data.isClosed;
+            const calcTotal = (l) => (l || []).reduce((a,b) => a + (Number(b.amount)||0), 0);
+            const calcPaid = (l) => (l || []).filter(i => i.paid).reduce((a,b) => a + (Number(b.amount)||0), 0);
+
+            // CÁLCULO GASTO SUPERMERCADO: Historial Simple + Listas (Solo items con check)
+            const marketSimpleSpent = calcTotal(data.supermarket?.items);
+            const marketListsSpent = (data.supermarket?.lists || []).reduce((acc, list) => {
+                const listTotal = (list.items || []).filter(i => i.checked).reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+                return acc + listTotal;
+            }, 0);
+            
+            const marketSpent = marketSimpleSpent + marketListsSpent;
+
+            const customTotal = (data.customModules||[]).reduce((a,b) => a + calcTotal(b.items), 0);
+            const customPaid = (data.customModules||[]).reduce((a,b) => a + calcPaid(b.items), 0);
+            
+            // CÁLCULO TARJETAS: TOTAL DEUDA VS TOTAL PAGADO
+            const creditCalculation = (data.creditCards||[]).reduce((acc, item) => {
+                if(item.status === 'no_debt') return acc;
+                let fullAmount = 0;
+                let paidAmount = Number(item.payedAmount) || 0;
+
+                if (item.type === 'linea') {
+                    // En Línea de Crédito, el "Gasto" es lo que has usado (totalDebt)
+                    // Si pagas, baja la deuda, pero para efectos de "Gasto del Mes" consideramos el uso total registrado
+                    fullAmount = Number(item.totalDebt) || 0; 
+                } else if (item.type === 'tc_dolares') {
+                    const quota = Number(item.monthlyQuota) || 0;
+                    fullAmount = quota * USD_VALUE;
+                    paidAmount = paidAmount * USD_VALUE; // Asumimos abono también en USD para simplificar o si el usuario pone CLP habría que ajustar. Por ahora asumimos input en misma moneda.
+                } else {
+                    // TC Pesos: El gasto es la Cuota Mensual completa
+                    fullAmount = Number(item.monthlyQuota) || 0;
+                }
+                
+                return {
+                    total: acc.total + fullAmount,
+                    paid: acc.paid + paidAmount
+                };
+            }, { total: 0, paid: 0 });
+
+            const totals = {
+                hogar: calcTotal(data.hogar), 
+                hogarPaid: calcPaid(data.hogar),
+
+                subscriptions: calcTotal(data.subscriptions),
+                subscriptionsPaid: calcPaid(data.subscriptions),
+
+                creditCards: creditCalculation.total, 
+                creditCardsPaid: creditCalculation.paid,
+
+                supermarket: marketSpent, 
+                
+                savings: calcTotal(data.savings),
+                savingsPaid: calcPaid(data.savings),
+
+                loansGiven: calcTotal(data.loansGiven), 
+                loansGivenPaid: calcPaid(data.loansGiven),
+                
+                street: calcTotal(data.streetFood),
+                streetPaid: calcPaid(data.streetFood),
+
+                custom: customTotal
+            };
+            
+            // CÁLCULO DE PENDIENTES HOGAR (Para el botón de categoría)
+            const hogarPending = (totals.hogar - totals.hogarPaid) + 
+                                 (totals.subscriptions - totals.subscriptionsPaid) + 
+                                 (totals.street - totals.streetPaid) + 
+                                 (customTotal - customPaid);
+            
+            // CÁLCULO TOTAL PENDIENTE POR PAGAR (Hogar + Tarjetas + Supermercado (0) - Préstamos (0))
+            // Se asume Supermercado pagado al día (pendiente 0) y se excluyen Préstamos/Ahorros
+            const creditPending = Math.max(0, totals.creditCards - totals.creditCardsPaid);
+            const totalPendingToPay = hogarPending + creditPending;
+
+            const grandTotalExpenses = totals.hogar + totals.subscriptions + totals.street + totals.custom + totals.creditCards + totals.supermarket;
+            const totalAhorros = totals.savings + totals.loansGiven;
+            
+            // TOTAL OUTFLOWS: Sumatoria de todo lo que hay que desembolsar en el mes (Deudas Totales + Ahorros Totales)
+            const totalOutflows = grandTotalExpenses + totalAhorros;
+
+            // TOTAL PAGADO: Sumatoria de todo lo que ya se pagó
+            // Asumimos Supermercado como pagado al 100% (gasto histórico) para que cuadre en la visualización de "flujo ejecutado"
+            const totalPaidOutflows = totals.hogarPaid + totals.subscriptionsPaid + totals.streetPaid + customPaid + totals.creditCardsPaid + totals.savingsPaid + totals.loansGivenPaid + marketSpent;
+
+            const totalIncome = (Number(data.income) || 0) + (Number(data.extraIncome) || 0);
+            const balance = totalIncome - totalOutflows;
+
+            const expenseDistribution = [
+                { label: 'Hogar', value: totals.hogar + totals.subscriptions + totals.custom + totals.street, color: '#10B981' }, 
+                { label: 'Super', value: totals.supermarket, color: '#6366F1' }, 
+                { label: 'Tarjetas', value: totals.creditCards, color: '#F43F5E' }, 
+            ].filter(i => i.value > 0);
+
+            const creditCardUsage = (data.creditCards || []).map(card => ({
+                label: card.name,
+                total: card.type === 'linea' ? (Number(card.totalDebt)||0) : (Number(card.monthlyQuota)||0),
+                paid: Number(card.payedAmount) || 0
+            })).filter(c => c.total > 0);
+
+            const updateCustomModules = (fn) => !isReadOnly && setData({...data, customModules: fn(data.customModules || [])});
+            const togglePaid = (k, id) => updateList(k, l => l.map(i => i.id === id ? {...i, paid: !i.paid} : i));
+            const updateAmount = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, amount: v} : i));
+            const updateName = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, name: v} : i));
+            const delItem = (k, id) => updateList(k, l => l.filter(i => i.id !== id));
+            const addItem = (k, state, setState) => { if(!state.name || !state.amount || isReadOnly) return; updateList(k, l => [...l, {id: Date.now(), name: state.name, amount: Number(state.amount), paid: false}]); setState({name:'', amount:''}); };
+            const updateCard = (id, field, val) => { if (isReadOnly) return; updateList('creditCards', list => list.map(c => c.id === id ? { ...c, [field]: val } : c)); };
+            
+            const uniqueBanks = [...new Set((data.creditCards || []).map(item => item.bank))];
+            
+            const marketBudget = Number(data.supermarket?.budget) || 0;
+            const marketRatio = marketBudget > 0 ? (marketSpent / marketBudget) : 0;
+            let marketStatusColor = "text-gray-500", marketBarColor = "bg-gray-200", marketBg = "bg-white";
+            if (marketBudget > 0) { if (marketSpent > marketBudget) { marketStatusColor = "text-red-600"; marketBarColor = "bg-red-500"; marketBg = "bg-red-50"; } else if (marketRatio >= 0.8) { marketStatusColor = "text-orange-500"; marketBarColor = "bg-orange-500"; marketBg = "bg-orange-50"; } else { marketStatusColor = "text-green-600"; marketBarColor = "bg-green-500"; marketBg = "bg-green-50"; } }
+
+            // HELPERS PARA LISTAS
+            const handleCreateList = () => {
+                const newList = { id: Date.now(), name: 'Nueva Lista', items: [] };
+                setData({ ...data, supermarket: { ...data.supermarket, lists: [...(data.supermarket.lists || []), newList] } });
+                setActiveListId(newList.id);
+            };
+
+            const activeList = activeListId ? (data.supermarket?.lists || []).find(l => l.id === activeListId) : null;
+            
+            const updateActiveList = (newListData) => {
+                const updatedLists = data.supermarket.lists.map(l => l.id === activeListId ? newListData : l);
+                setData({ ...data, supermarket: { ...data.supermarket, lists: updatedLists } });
+            };
+            
+            // Refactorizado para aceptar una lista específica (desde el row)
+            const handleFinishList = (targetList) => {
+                if (!targetList) return;
+
+                const checkedItems = targetList.items.filter(i => i.checked);
+                
+                // Validación estricta: Si no hay items marcados, no se procesa (el botón estará oculto de todas formas en la UI)
+                if (checkedItems.length === 0) return;
+
+                const totalSpent = checkedItems.reduce((acc, i) => acc + (Number(i.price) || 0), 0);
+                const hasMissingPrices = checkedItems.some(i => !i.price || Number(i.price) === 0);
+
+                // Lógica de Confirmación
+                if (hasMissingPrices) {
+                    if (!window.confirm(`Registrarás la compra en "${targetList.name}" con valores inexactos (faltan precios).\n\n¿Estás seguro?`)) {
+                        return;
+                    }
+                } else {
+                     if (!window.confirm(`¿Registrar compra de ${targetList.name} por ${formatCurrency(totalSpent)}?\n\nLa lista se eliminará y pasará al historial.`)) {
+                        return;
+                    }
+                }
+
+                // Ejecutar Acción
+                const newItem = {
+                    id: Date.now(),
+                    name: targetList.name,
+                    amount: totalSpent,
+                    inexact: hasMissingPrices
+                };
+                
+                const newLists = data.supermarket.lists.filter(l => l.id !== targetList.id);
+                const newHistory = [...(data.supermarket.items || []), newItem];
+                
+                setData({
+                    ...data,
+                    supermarket: {
+                        ...data.supermarket,
+                        lists: newLists,
+                        items: newHistory
+                    }
+                });
+            };
+
+            const itemsWithoutPrice = activeList ? activeList.items.filter(i => !i.price || Number(i.price) === 0).length : 0;
+            const activeListTotal = activeList ? activeList.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0) : 0;
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-10">
+                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} url={sheetUrl} onSave={(u) => { setSheetUrl(u); localStorage.setItem('google_sheet_script_url', u); }} currentData={data} onImport={setData} />
+                    <header className={`sticky top-0 z-40 px-4 py-3 text-white shadow-lg transition-colors ${isReadOnly ? 'bg-gray-800' : 'bg-indigo-600'}`}>
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-2">
+                                {currentView !== 'dashboard' && <button onClick={() => { 
+                                    if(activeListId) { setActiveListId(null); } 
+                                    else { setCurrentView('dashboard'); }
+                                }}><ArrowLeft/></button>}
+                                <h1 className="font-bold text-lg">
+                                    {activeListId ? 'Editar Lista' : 
+                                     currentView === 'dashboard' ? 'Mis Finanzas' : 
+                                     currentView === 'graficos' ? 'Gráficos' : 
+                                     currentView === 'hogar' ? 'Hogar' : 
+                                     currentView === 'tarjetas' ? 'Tarjetas' : 
+                                     currentView === 'supermercado' ? 'Supermercado' : 'Ahorro & Préstamos'}
+                                </h1>
+                            </div>
+                            <div className="flex gap-2">
+                                {sheetUrl && (syncStatus === 'syncing' ? <Loader2 className="animate-spin" size={18}/> : <Cloud size={18}/>)}
+                                <button onClick={() => setShowSettings(true)}><Settings size={18}/></button>
+                                <button onClick={toggleMonthStatus} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition ${isReadOnly ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-indigo-500 text-indigo-100 hover:bg-indigo-400'}`}>{isReadOnly ? <Lock size={12}/> : <Unlock size={12}/>}{isReadOnly ? 'CERRADO' : 'Cerrar'}</button>
+                            </div>
+                        </div>
+                        {currentView === 'dashboard' && (
+                            <div className="flex justify-between items-end">
+                                <div className="flex gap-2">
+                                    <div className="relative"><select value={viewDate.month} onChange={e => setViewDate({...viewDate, month: parseInt(e.target.value)})} className="bg-white/20 rounded px-2 py-1 text-sm appearance-none pr-6">{MONTHS.map((m,i)=><option key={i} value={i} className="text-black">{m}</option>)}</select><ChevronDown className="absolute right-1 top-2 pointer-events-none" size={14}/></div>
+                                    <div className="relative"><select value={viewDate.year} onChange={e => setViewDate({...viewDate, year: parseInt(e.target.value)})} className="bg-white/20 rounded px-2 py-1 text-sm appearance-none pr-6">{[2024, 2025, 2026].map(y=><option key={y} value={y} className="text-black">{y}</option>)}</select><ChevronDown className="absolute right-1 top-2 pointer-events-none" size={14}/></div>
+                                </div>
+                                {!isReadOnly && <button onClick={resetMonth} className="text-[10px] opacity-70 hover:opacity-100 flex items-center gap-1 hover:bg-white/10 px-2 py-1 rounded transition"><RotateCcw size={10} /> Limpiar</button>}
+                            </div>
+                        )}
+                    </header>
+
+                    <div className="px-4 py-6 space-y-6 fade-in">
+                        {currentView === 'dashboard' && (
+                            <>
+                                <div className={`p-5 rounded-3xl shadow-lg relative overflow-hidden ${isReadOnly ? 'bg-gray-200' : 'bg-white'}`}>
+                                    <div className="absolute top-0 right-0 p-4 opacity-5"><DollarSign size={100}/></div>
+                                    
+                                    {/* SECCIÓN INGRESOS */}
+                                    <div className="mb-4 space-y-3">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase">Ingreso Mensual</label>
+                                            <div className="flex items-center gap-2 text-2xl font-bold text-gray-800">
+                                                <span className="text-green-500">$</span>
+                                                <input type="number" disabled={isReadOnly} value={data.income} onChange={e => setData({...data, income: e.target.value})} className="bg-transparent w-full outline-none" placeholder="0"/>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-dashed border-gray-100">
+                                            <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Banknote size={12}/> Bonos / Extras</label>
+                                            <div className="flex items-center gap-2 text-lg font-bold text-gray-600">
+                                                <span className="text-green-500/70">$</span>
+                                                <input type="number" disabled={isReadOnly} value={data.extraIncome || ''} onChange={e => setData({...data, extraIncome: e.target.value})} className="bg-transparent w-full outline-none" placeholder="0"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* SECCIÓN GASTOS Y AHORROS */}
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
+                                        <div>
+                                            <p className="text-gray-400 font-bold">Gastos Totales</p>
+                                            <p className="text-red-500 font-bold text-lg leading-tight">{formatCurrency(totalOutflows)}</p>
+                                            <div className="flex flex-col gap-0.5 mt-1">
+                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
+                                                    Pagado: {formatCurrency(totalPaidOutflows)}
+                                                </p>
+                                                <p className="text-[10px] font-bold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded">
+                                                    Pendiente: {formatCurrency(totalPendingToPay)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400 font-bold">Ahorros y Préstamos</p>
+                                            <p className="text-gray-800 font-bold text-lg">{formatCurrency(totalAhorros)}</p>
+                                            <div className="flex flex-col gap-0.5 mt-1">
+                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
+                                                    Ahorros: {formatCurrency(totals.savings)}
+                                                </p>
+                                                <p className="text-[10px] font-bold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded">
+                                                    Préstamos: {formatCurrency(totals.loansGiven)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* DISPONIBLE */}
+                                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-end">
+                                        <span className="text-xs font-bold text-gray-400 uppercase">Disponible Real</span>
+                                        <span className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{formatCurrency(balance)}</span>
+                                    </div>
+                                </div>
+                                <div className="grid gap-3">
+                                    <CategoryButton title="Hogar" icon={Home} total={hogarPending} color={{bg:'bg-emerald-100', text:'text-emerald-600'}} onClick={()=>setCurrentView('hogar')} />
+                                    <CategoryButton title="Tarjetas" icon={CreditCard} total={totals.creditCards} color={{bg:'bg-rose-100', text:'text-rose-600'}} onClick={()=>setCurrentView('tarjetas')} />
+                                    <CategoryButton title="Supermercado" icon={ShoppingCart} total={totals.supermarket} color={{bg:'bg-indigo-100', text:'text-indigo-600'}} onClick={()=>setCurrentView('supermercado')} />
+                                    <CategoryButton title="Ahorro y Préstamos" icon={PiggyBank} total={totalAhorros} color={{bg:'bg-orange-100', text:'text-orange-600'}} onClick={()=>setCurrentView('ahorros')} />
+                                    <CategoryButton 
+                                        title="Gráficos" 
+                                        icon={BarChart3} 
+                                        total={0} 
+                                        showAmount={false} 
+                                        subtitle="Análisis y estadísticas" 
+                                        color={{bg:'bg-blue-100', text:'text-blue-600'}} 
+                                        onClick={()=>setCurrentView('graficos')} 
+                                    />
+                                </div>
+                            </>
+                        )}
+                        {currentView === 'hogar' && (
+                            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                                {/* CARD RESUMEN HOGAR */}
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-emerald-100">
+                                    <h3 className="text-emerald-800 font-bold text-lg mb-4 flex items-center gap-2">
+                                        <LayoutDashboard size={20}/> Resumen Deuda Hogar
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600 flex items-center gap-2"><Home size={14}/> Gastos Fijos (Falta)</span>
+                                            <span className="font-bold text-gray-800">{formatCurrency(totals.hogar - totals.hogarPaid)}</span>
+                                        </div>
+                                        {data.customModules.map(m => (
+                                            <div key={m.id} className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-600 flex items-center gap-2"><MapPin size={14}/> {m.name} (Falta)</span>
+                                                <span className="font-bold text-gray-800">{formatCurrency(calcTotal(m.items) - calcPaid(m.items))}</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600 flex items-center gap-2"><Smartphone size={14}/> Suscripciones (Falta)</span>
+                                            <span className="font-bold text-gray-800">{formatCurrency(totals.subscriptions - totals.subscriptionsPaid)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600 flex items-center gap-2"><Coffee size={14}/> Gastos Varios (Falta)</span>
+                                            <span className="font-bold text-gray-800">{formatCurrency(totals.street - totals.streetPaid)}</span>
+                                        </div>
+                                        
+                                        <div className="border-t border-emerald-100 pt-3 mt-2 flex justify-between items-center">
+                                            <span className="font-bold text-emerald-800 uppercase text-xs tracking-wider">Total Por Pagar</span>
+                                            <span className="font-bold text-xl text-emerald-600">
+                                                {formatCurrency(
+                                                    (totals.hogar - totals.hogarPaid) + 
+                                                    (totals.subscriptions - totals.subscriptionsPaid) + 
+                                                    (totals.street - totals.streetPaid) + 
+                                                    (customTotal - customPaid)
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* GASTOS FIJOS */}
+                                <SectionCard 
+                                    title="Gastos Fijos" 
+                                    icon={Home} 
+                                    total={totals.hogar} 
+                                    paid={totals.hogarPaid} 
+                                    colorClass="bg-white" 
+                                    headerClass="bg-emerald-50 text-emerald-800" 
+                                    readOnly={isReadOnly}
+                                >
+                                    {data.hogar.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('hogar',i.id)} onAmountChange={(v)=>updateAmount('hogar',i.id,v)} onNameChange={(v)=>updateName('hogar',i.id,v)} showDelete={true} onDelete={()=>delItem('hogar',i.id)}/>)}
+                                    {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Nuevo..." value={newHogarItem.name} onChange={e=>setNewHogarItem({...newHogarItem, name:e.target.value})}/><input type="number" className="border rounded px-2 py-1 w-20 text-sm" placeholder="$" value={newHogarItem.amount} onChange={e=>setNewHogarItem({...newHogarItem, amount:e.target.value})}/><button onClick={()=>addItem('hogar', newHogarItem, setNewHogarItem)} className="bg-emerald-500 text-white rounded px-2"><Plus/></button></div>}
+                                </SectionCard>
+
+                                {/* MODULOS CUSTOM */}
+                                {data.customModules.map(mod => (
+                                    <SectionCard 
+                                        key={mod.id} 
+                                        title={mod.name} 
+                                        icon={MapPin} 
+                                        total={calcTotal(mod.items)} 
+                                        paid={calcPaid(mod.items)}
+                                        colorClass="bg-white" 
+                                        headerClass="bg-orange-50 text-orange-800" 
+                                        readOnly={isReadOnly} 
+                                        onDeleteSection={()=>{if(window.confirm('Borrar?')) setData({...data, customModules: data.customModules.filter(m=>m.id!==mod.id)})}}
+                                    >
+                                        {mod.items.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.map(it => it.id === i.id ? {...it, paid: !it.paid} : it)} : m); updateCustomModules(() => newData); }} onAmountChange={(v)=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.map(it => it.id === i.id ? {...it, amount: v} : it)} : m); updateCustomModules(() => newData); }} onNameChange={(v)=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.map(it => it.id === i.id ? {...it, name: v} : it)} : m); updateCustomModules(() => newData); }} showDelete={true} onDelete={()=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.filter(it => it.id !== i.id)} : m); updateCustomModules(() => newData); }}/>)}
+                                        {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Nuevo..." value={customModuleInputs[mod.id]?.name || ''} onChange={e=>setCustomModuleInputs({...customModuleInputs, [mod.id]: {...customModuleInputs[mod.id], name:e.target.value}})}/><input type="number" className="border rounded px-2 py-1 w-20 text-sm" placeholder="$" value={customModuleInputs[mod.id]?.amount || ''} onChange={e=>setCustomModuleInputs({...customModuleInputs, [mod.id]: {...customModuleInputs[mod.id], amount:e.target.value}})}/><button onClick={()=>{ const input = customModuleInputs[mod.id]; if(!input?.name || !input?.amount) return; const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: [...m.items, {id: Date.now(), name: input.name, amount: Number(input.amount), paid: false}]} : m); updateCustomModules(() => newData); setCustomModuleInputs({...customModuleInputs, [mod.id]: {name:'', amount:''}}); }} className="bg-orange-500 text-white rounded px-2"><Plus/></button></div>}
+                                    </SectionCard>
+                                ))}
+                                {!isReadOnly && <button onClick={() => updateCustomModules(list => [...list, { id: Date.now(), name: 'Nuevo Módulo', items: [] }])} className="w-full mt-4 py-4 border-2 border-dashed border-emerald-200 rounded-2xl text-emerald-600 font-bold text-sm hover:bg-emerald-50 flex justify-center gap-2"><Plus size={18} /> Nuevo Módulo de Gastos</button>}
+
+                                {/* SUSCRIPCIONES */}
+                                <SectionCard 
+                                    title="Suscripciones" 
+                                    icon={Smartphone} 
+                                    total={totals.subscriptions} 
+                                    paid={totals.subscriptionsPaid}
+                                    colorClass="bg-white" 
+                                    headerClass="bg-purple-50 text-purple-800" 
+                                    readOnly={isReadOnly}
+                                >
+                                    {data.subscriptions.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('subscriptions',i.id)} onAmountChange={(v)=>updateAmount('subscriptions',i.id,v)} onNameChange={(v)=>updateName('subscriptions',i.id,v)} showDelete={true} onDelete={()=>delItem('subscriptions',i.id)}/>)}
+                                    {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Nueva..." value={newSubscriptionItem.name} onChange={e=>setNewSubscriptionItem({...newSubscriptionItem, name:e.target.value})}/><input type="number" className="border rounded px-2 py-1 w-20 text-sm" placeholder="$" value={newSubscriptionItem.amount} onChange={e=>setNewSubscriptionItem({...newSubscriptionItem, amount:e.target.value})}/><button onClick={()=>addItem('subscriptions', newSubscriptionItem, setNewSubscriptionItem)} className="bg-purple-500 text-white rounded px-2"><Plus/></button></div>}
+                                </SectionCard>
+
+                                {/* GASTOS VARIOS */}
+                                <SectionCard 
+                                    title="Gastos Varios" 
+                                    icon={Coffee} 
+                                    total={totals.street} 
+                                    paid={totals.streetPaid}
+                                    colorClass="bg-white" 
+                                    headerClass="bg-blue-50 text-blue-800" 
+                                    readOnly={isReadOnly}
+                                >
+                                    {data.streetFood.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('streetFood',i.id)} onAmountChange={(v)=>updateAmount('streetFood',i.id,v)} onNameChange={(v)=>updateName('streetFood',i.id,v)} showDelete={true} onDelete={()=>delItem('streetFood',i.id)}/>)}
+                                    {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Gasto..." value={newStreetItem.name} onChange={e=>setNewStreetItem({...newStreetItem, name:e.target.value})}/><input type="number" className="border rounded px-2 py-1 w-20 text-sm" placeholder="$" value={newStreetItem.amount} onChange={e=>setNewStreetItem({...newStreetItem, amount:e.target.value})}/><button onClick={()=>addItem('streetFood', newStreetItem, setNewStreetItem)} className="bg-blue-500 text-white rounded px-2"><Plus/></button></div>}
+                                </SectionCard>
+                            </div>
+                        )}
+                        {currentView === 'tarjetas' && (
+                            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                                <SectionCard title="Gestión de Tarjetas" icon={CreditCard} total={totals.creditCards} headerClass={`text-rose-800 ${isReadOnly ? 'bg-gray-200 text-gray-600' : 'bg-rose-50'}`} readOnly={isReadOnly}>
+                                    {uniqueBanks.map(bank => {
+                                        const bankItems = (data.creditCards || []).filter(item => item.bank === bank);
+                                        return (
+                                            <div key={bank} className="mb-6 last:mb-2 bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden">
+                                                <div className="bg-rose-50/50 px-4 py-2 border-b border-rose-100 flex justify-between items-center"><h4 className="text-xs font-bold text-rose-900 uppercase tracking-widest flex items-center gap-2"><Building2 size={14} className="text-rose-400"/> {bank}</h4>{!isReadOnly && <button onClick={() => { if(window.confirm(`¿Eliminar ${bank}?`)) updateList('creditCards', list => list.filter(c => c.bank !== bank)) }} className="text-rose-300 hover:text-rose-600"><Trash2 size={16} /></button>}</div>
+                                                <div className="px-4 py-3">{bankItems.map(item => (<DetailedCreditCardRow key={item.id} item={item} readOnly={isReadOnly} onUpdate={(field, val) => updateCard(item.id, field, val)} onDelete={() => deleteItem('creditCards', item.id)}/>))}</div>
+                                            </div>
+                                        )
+                                    })}
+                                    {!isAddingBank && !isReadOnly ? (<button onClick={() => setIsAddingBank(true)} className="w-full mt-2 py-3 border-2 border-dashed border-rose-200 rounded-xl text-rose-400 font-bold text-sm hover:bg-rose-50 transition flex items-center justify-center gap-2"><Plus size={18} /> Agregar Banco</button>) : isAddingBank && (<div className="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200"><h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Nuevo Banco</h4><input autoFocus className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3 focus:outline-none focus:border-rose-500" placeholder="Nombre (Ej. Scotiabank)" value={newBankName} onChange={(e) => setNewBankName(e.target.value)}/><div className="flex flex-wrap gap-2 mb-4"><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.pesos} onChange={e => setNewBankTypes({...newBankTypes, pesos: e.target.checked})} className="accent-rose-500"/> TC Pesos</label><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.dolares} onChange={e => setNewBankTypes({...newBankTypes, dolares: e.target.checked})} className="accent-rose-500"/> TC Dólares</label><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.linea} onChange={e => setNewBankTypes({...newBankTypes, linea: e.target.checked})} className="accent-rose-500"/> Línea</label></div><div className="flex gap-2"><button onClick={addBank} className="flex-1 bg-rose-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-rose-700">Guardar</button><button onClick={() => setIsAddingBank(false)} className="px-4 text-gray-500 text-sm hover:text-gray-800">Cancelar</button></div></div>)}
+                                </SectionCard>
+                            </div>
+                        )}
+                        {currentView === 'supermercado' && (
+                            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                                
+                                {!activeListId ? (
+                                    /* VISTA PRINCIPAL SUPERMERCADO */
+                                    <SectionCard title="Supermercado" icon={ShoppingCart} total={totals.supermarket} headerClass={`text-gray-700 ${isReadOnly ? 'bg-gray-200' : 'bg-gray-50'}`} readOnly={isReadOnly}>
+                                        <div className="space-y-6">
+                                            {/* Tarjeta de Presupuesto */}
+                                            <div className={`p-5 rounded-2xl border transition-colors duration-300 ${marketBudget > 0 && marketSpent > marketBudget ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                                                        <Banknote size={14}/> Presupuesto Mensual
+                                                    </label>
+                                                    {marketBudget > 0 && (
+                                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${marketSpent > marketBudget ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                            {marketSpent > marketBudget ? 'Excedido' : 'En Rango'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">$</span>
+                                                    <input 
+                                                        type="number" 
+                                                        disabled={isReadOnly} 
+                                                        placeholder="0" 
+                                                        value={data.supermarket?.budget || ''} 
+                                                        onChange={(e) => !isReadOnly && setData({...data, supermarket: {...data.supermarket, budget: e.target.value}})} 
+                                                        className="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-2xl font-bold text-gray-800 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm disabled:bg-gray-100"
+                                                    />
+                                                </div>
+                                                
+                                                {/* Barra de Progreso */}
+                                                {marketBudget > 0 && (
+                                                    <div className="mt-5">
+                                                        <div className="flex justify-between text-xs mb-2 font-medium">
+                                                            <span className={`${marketSpent > marketBudget ? 'text-red-600' : 'text-gray-600'}`}>
+                                                                Gastado: <span className="font-bold text-lg align-middle">{formatCurrency(marketSpent)}</span>
+                                                            </span>
+                                                            <span className="text-gray-400">
+                                                                Meta: {formatCurrency(marketBudget)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-full bg-gray-200/80 rounded-full h-3 overflow-hidden">
+                                                            <div 
+                                                                className={`h-full rounded-full transition-all duration-500 ${marketSpent > marketBudget ? 'bg-red-500' : marketRatio >= 0.8 ? 'bg-orange-500' : 'bg-emerald-500'}`} 
+                                                                style={{ width: `${Math.min((marketSpent / marketBudget) * 100, 100)}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <div className="text-right mt-1">
+                                                            <span className="text-xs font-bold text-gray-400">Restante: {formatCurrency(Math.max(0, marketBudget - marketSpent))}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* CAMINO 2: LISTAS DE MERCADO */}
+                                            <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-2">
+                                                        <List size={14}/> Listas de Mercado
+                                                    </h4>
+                                                </div>
+                                                
+                                                <div className="space-y-2 mb-3">
+                                                    {(data.supermarket?.lists || []).length === 0 && <p className="text-xs text-gray-400 italic text-center py-2">No tienes listas activas</p>}
+                                                    {(data.supermarket?.lists || []).map(list => {
+                                                        const listCheckedTotal = list.items.filter(i => i.checked).reduce((acc, i) => acc + (Number(i.price)||0), 0);
+                                                        const listFullTotal = list.items.reduce((acc, i) => acc + (Number(i.price)||0), 0);
+                                                        
+                                                        const itemsChecked = list.items.filter(i => i.checked).length;
+                                                        const hasMissingPrices = list.items.some(i => !i.price || Number(i.price) === 0);
+                                                        
+                                                        return (
+                                                            <div key={list.id} onClick={() => setActiveListId(list.id)} className={`bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center cursor-pointer transition-all relative group ${hasMissingPrices ? 'border-orange-200 shadow-orange-50' : 'border-indigo-50 hover:border-indigo-300'}`}>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`p-2 rounded-lg ${hasMissingPrices ? 'bg-orange-100 text-orange-500' : 'bg-indigo-100 text-indigo-600'}`}>
+                                                                        {hasMissingPrices ? <AlertTriangle size={16}/> : <ShoppingCart size={16}/>}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-bold text-gray-800 text-sm">{list.name}</p>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <p className="text-[10px] text-gray-500">{itemsChecked}/{list.items.length} productos</p>
+                                                                            {hasMissingPrices && <span className="text-[9px] font-bold text-orange-500 bg-orange-50 px-1.5 rounded">Precios Inexactos</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* BOTÓN TERMINAR: Solo visible si hay items marcados */}
+                                                                    {!isReadOnly && itemsChecked > 0 && (
+                                                                        <button 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleFinishList(list);
+                                                                            }}
+                                                                            className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm animate-in fade-in zoom-in"
+                                                                            title="Finalizar compra"
+                                                                        >
+                                                                            <CheckCircle2 size={18}/>
+                                                                        </button>
+                                                                    )}
+                                                                    
+                                                                    <div className="text-right pl-2 border-l border-gray-100">
+                                                                        <span className={`block font-bold text-sm ${hasMissingPrices ? 'text-orange-600' : 'text-indigo-600'}`}>{formatCurrency(listCheckedTotal)}</span>
+                                                                        <span className="text-[9px] text-gray-400 block">Est. {formatCurrency(listFullTotal)}</span>
+                                                                        
+                                                                        {!isReadOnly && (
+                                                                            <button 
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if(window.confirm("¿Eliminar lista?")) {
+                                                                                        const newLists = data.supermarket.lists.filter(l => l.id !== list.id);
+                                                                                        setData({...data, supermarket: { ...data.supermarket, lists: newLists }});
+                                                                                    }
+                                                                                }}
+                                                                                className="text-[10px] text-red-300 hover:text-red-500 block ml-auto mt-1"
+                                                                            >
+                                                                                Eliminar
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+
+                                                {!isReadOnly && (
+                                                    <button onClick={handleCreateList} className="w-full py-3 bg-white border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 font-bold text-sm hover:bg-indigo-50 transition flex items-center justify-center gap-2">
+                                                        <Plus size={18} /> Crear Nueva Lista
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* CAMINO 1: HISTORIAL SIMPLE */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-3 px-1 pt-2 border-t border-gray-100">
+                                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                                        <ShoppingCart size={14}/> Compras Rápidas ({data.supermarket?.items?.length || 0})
+                                                    </h4>
+                                                </div>
+
+                                                {/* Input Nueva Compra Rápida (AHORA PRIMERO) */}
+                                                {!isReadOnly && (
+                                                    <div className="mb-4">
+                                                        <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200 flex gap-2">
+                                                            <input 
+                                                                className="flex-1 bg-transparent px-4 py-3 text-sm font-medium focus:outline-none placeholder-gray-400 text-gray-800" 
+                                                                placeholder="Nombre local..." 
+                                                                value={newMarketItem.name} 
+                                                                onChange={(e) => setNewMarketItem({...newMarketItem, name: e.target.value})}
+                                                            />
+                                                            <div className="w-px bg-gray-200 my-2"></div>
+                                                            <div className="relative w-28">
+                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">$</span>
+                                                                <input 
+                                                                    className="w-full bg-transparent pl-6 pr-3 py-3 text-sm font-bold focus:outline-none placeholder-gray-300 text-gray-800" 
+                                                                    placeholder="0" 
+                                                                    type="number" 
+                                                                    value={newMarketItem.amount} 
+                                                                    onChange={(e) => setNewMarketItem({...newMarketItem, amount: e.target.value})}
+                                                                />
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => { 
+                                                                    if (!newMarketItem.amount) return; 
+                                                                    setData({...data, supermarket: {...data.supermarket, items: [...(data.supermarket?.items || []), {id: Date.now(), name: newMarketItem.name || 'Compra', amount: Number(newMarketItem.amount)}]}}); 
+                                                                    setNewMarketItem({ name: '', amount: '' }); 
+                                                                }} 
+                                                                disabled={!newMarketItem.amount} 
+                                                                className="bg-indigo-600 text-white rounded-xl w-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 disabled:bg-gray-300 transition-all shadow-md"
+                                                            >
+                                                                <Plus size={20} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Historial de Compras */}
+                                                <div className="space-y-2.5">
+                                                    {(data.supermarket?.items || []).length === 0 && (
+                                                        <div className="text-center py-4 text-gray-400 text-xs italic">
+                                                            Sin compras rápidas registradas
+                                                        </div>
+                                                    )}
+                                                    {(data.supermarket?.items || []).map(item => (
+                                                        <div key={item.id} className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-2 rounded-xl shrink-0 ${item.inexact ? 'bg-orange-100 text-orange-500' : 'bg-gray-100 text-gray-500'}`}>
+                                                                    {item.inexact ? <AlertTriangle size={16}/> : <ShoppingCart size={16} />}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-sm font-bold text-gray-700 block">{item.name}</span>
+                                                                    {item.inexact && <span className="text-[10px] text-orange-500 font-medium">Valor inexacto</span>}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`text-sm font-bold px-2 py-1 rounded-lg border ${item.inexact ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-gray-900 bg-gray-50 border-gray-100'}`}>
+                                                                    {formatCurrency(item.amount)}
+                                                                </span>
+                                                                {!isReadOnly && (
+                                                                    <button 
+                                                                        onClick={() => setData({...data, supermarket: {...data.supermarket, items: data.supermarket.items.filter(i => i.id !== item.id)}})} 
+                                                                        className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </SectionCard>
+                                ) : (
+                                    /* VISTA DETALLE LISTA (INTERNA) */
+                                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
+                                        {/* Header Lista */}
+                                        <div className="bg-indigo-600 p-4 pb-8">
+                                            <label className="text-xs text-indigo-200 font-bold uppercase mb-1 block">Nombre Supermercado</label>
+                                            <input 
+                                                value={activeList.name} 
+                                                disabled={isReadOnly}
+                                                onChange={(e) => updateActiveList({ ...activeList, name: e.target.value })}
+                                                className="w-full bg-transparent text-2xl font-bold text-white placeholder-indigo-300 focus:outline-none border-b border-indigo-400/50 pb-1"
+                                                placeholder="Ej. Lider, Jumbo..."
+                                            />
+                                        </div>
+
+                                        {/* Cuerpo Lista */}
+                                        <div className="flex-1 p-4 -mt-4 bg-white rounded-t-3xl flex flex-col">
+                                            
+                                            {/* Resumen Alertas */}
+                                            {itemsWithoutPrice > 0 && (
+                                                <div className="mb-4 bg-orange-50 border border-orange-100 p-3 rounded-xl flex items-start gap-3">
+                                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18}/>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-orange-700">Total posiblemente inexacto</p>
+                                                        <p className="text-xs text-orange-600">Hay {itemsWithoutPrice} productos sin precio asignado.</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Input Nuevo Producto */}
+                                            {!isReadOnly && (
+                                                <div className="flex gap-2 mb-4">
+                                                    <input 
+                                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                                                        placeholder="Agregar producto..."
+                                                        value={newProduct.name}
+                                                        onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && newProduct.name.trim()) {
+                                                                updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] });
+                                                                setNewProduct({ name: '', price: '' });
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="relative w-24 shrink-0">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">$</span>
+                                                        <input 
+                                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-6 pr-3 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                                                            placeholder="0"
+                                                            type="number"
+                                                            value={newProduct.price}
+                                                            onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && newProduct.name.trim()) {
+                                                                    updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] });
+                                                                    setNewProduct({ name: '', price: '' });
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (!newProduct.name.trim()) return;
+                                                            updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] });
+                                                            setNewProduct({ name: '', price: '' });
+                                                        }}
+                                                        disabled={!newProduct.name.trim()}
+                                                        className="bg-indigo-600 text-white rounded-xl w-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                                                    >
+                                                        <Plus size={20}/>
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Lista de Items */}
+                                            <div className="space-y-2 flex-1 overflow-y-auto">
+                                                {activeList.items.length === 0 && (
+                                                    <div className="text-center py-10 text-gray-400 text-sm">
+                                                        Tu lista está vacía.<br/>Agrega productos arriba ☝️
+                                                    </div>
+                                                )}
+                                                {activeList.items.map(item => (
+                                                    <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.checked ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-gray-100'}`}>
+                                                        {/* Checkbox */}
+                                                        <button 
+                                                            disabled={isReadOnly}
+                                                            onClick={() => {
+                                                                const newItems = activeList.items.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i);
+                                                                updateActiveList({ ...activeList, items: newItems });
+                                                            }}
+                                                            className={`shrink-0 transition-colors ${item.checked ? 'text-indigo-600' : 'text-gray-300 hover:text-gray-400'}`}
+                                                        >
+                                                            {item.checked ? <CheckCircle2 size={24} className="fill-indigo-100"/> : <Circle size={24}/>}
+                                                        </button>
+
+                                                        {/* Nombre */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className={`text-sm font-medium truncate ${item.checked ? 'text-indigo-800 line-through decoration-indigo-300' : 'text-gray-800'}`}>{item.name}</p>
+                                                        </div>
+
+                                                        {/* Precio Editable */}
+                                                        <div className="relative w-20 shrink-0">
+                                                            {(!item.price || item.price == 0) && (
+                                                                <span className="absolute -left-5 top-1/2 -translate-y-1/2 text-orange-400" title="Sin precio"><AlertTriangle size={14}/></span>
+                                                            )}
+                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
+                                                            <input 
+                                                                type="number"
+                                                                disabled={isReadOnly}
+                                                                value={item.price}
+                                                                onChange={(e) => {
+                                                                    const newItems = activeList.items.map(i => i.id === item.id ? { ...i, price: e.target.value } : i);
+                                                                    updateActiveList({ ...activeList, items: newItems });
+                                                                }}
+                                                                className={`w-full bg-transparent border-b border-dashed text-right pr-1 py-1 text-sm font-bold focus:outline-none focus:border-indigo-500 ${item.price > 0 ? (item.checked ? 'text-indigo-600 border-indigo-200' : 'text-gray-800 border-gray-300') : 'text-gray-400 border-orange-300'}`}
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+
+                                                        {/* Borrar */}
+                                                        {!isReadOnly && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const newItems = activeList.items.filter(i => i.id !== item.id);
+                                                                    updateActiveList({ ...activeList, items: newItems });
+                                                                }}
+                                                                className="text-gray-300 hover:text-red-500 p-1"
+                                                            >
+                                                                <Trash2 size={16}/>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Footer Totales */}
+                                            <div className="mt-4 pt-4 border-t border-gray-100">
+                                                <div className="flex justify-between items-center text-sm mb-1">
+                                                    <span className="text-gray-400">Estimado Lista (Todos)</span>
+                                                    <span className="font-bold text-gray-400">{formatCurrency(activeListTotal)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xl font-bold">
+                                                    <span className="text-gray-800">Total Carrito</span>
+                                                    <span className="text-indigo-600">{formatCurrency(activeList.items.filter(i => i.checked).reduce((a,b)=>a+(Number(b.price)||0),0))}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            {!isReadOnly && (
+                                                <div className="mt-6 space-y-3">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => { if(window.confirm("¿Eliminar lista completa?")) { 
+                                                            const newLists = data.supermarket.lists.filter(l => l.id !== activeListId);
+                                                            setData({...data, supermarket: { ...data.supermarket, lists: newLists }});
+                                                            setActiveListId(null);
+                                                        }}}
+                                                        className="w-full py-3 text-red-400 text-xs font-bold hover:text-red-600 flex items-center justify-center gap-2"
+                                                    >
+                                                        <Trash2 size={14}/> Eliminar esta lista sin guardar
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {currentView === 'graficos' && (
+                            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                                <div className="flex bg-gray-200 p-1 rounded-xl gap-1">{[{id: 'general', label: 'Resumen'}, {id: 'tarjetas', label: 'Tarjetas'}, {id: 'ahorro', label: 'Ahorro'}].map(t => (<button key={t.id} onClick={() => setChartTab(t.id)} className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${chartTab === t.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t.label}</button>))}</div>
+                                {chartTab === 'general' && <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><PieChart size={20} className="text-indigo-500"/> Distribución de Gastos</h3><SimplePieChart data={expenseDistribution} /></div>}
+                                {chartTab === 'tarjetas' && <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><CreditCard size={20} className="text-rose-500"/> Deuda vs Pagos</h3>{creditCardUsage.length === 0 ? <p className="text-sm text-gray-400 italic text-center py-4">No hay tarjetas registradas.</p> : creditCardUsage.map((c, i) => <ProgressBar key={i} label={c.label} value={c.paid} total={c.total} colorClass="bg-rose-500" />)}</div>}
+                                {chartTab === 'ahorro' && <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><PiggyBank size={20} className="text-emerald-500"/> Capacidad de Ahorro</h3><ProgressBar label="Ahorro vs Ingreso" value={totalAhorros} total={totalIncome} colorClass="bg-emerald-500" /><div className="mt-6 pt-6 border-t border-gray-100"><p className="text-xs text-gray-400 uppercase font-bold mb-2">Resumen Financiero</p><div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-600">Ingresos Totales</span><span className="font-bold text-green-600">{formatCurrency(totalIncome)}</span></div><div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-600">Gastos + Salidas</span><span className="font-bold text-red-500">{formatCurrency(grandTotalExpenses + totalAhorros)}</span></div><div className="flex justify-between items-center pt-2 border-t border-dashed border-gray-100"><span className="text-sm font-bold text-gray-800">Margen Libre</span><span className="font-bold text-blue-600">{formatCurrency(balance)}</span></div></div></div>}
+                            </div>
+                        )}
+                        {currentView === 'ahorros' && (
+                            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                                <SectionCard title="Ahorros" icon={PiggyBank} total={totals.savings} colorClass="bg-white" headerClass="bg-emerald-50 text-emerald-800" readOnly={isReadOnly}>
+                                    {data.savings.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('savings',i.id)} onAmountChange={(v)=>updateAmount('savings',i.id,v)} onNameChange={(v)=>updateName('savings',i.id,v)} showDelete={true} onDelete={()=>delItem('savings',i.id)}/>)}
+                                    {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Meta..." value={newSavingsItem.name} onChange={e=>setNewSavingsItem({...newSavingsItem, name:e.target.value})}/><input type="number" className="border rounded px-2 py-1 w-20 text-sm" placeholder="$" value={newSavingsItem.amount} onChange={e=>setNewSavingsItem({...newSavingsItem, amount:e.target.value})}/><button onClick={()=>addItem('savings', newSavingsItem, setNewSavingsItem)} className="bg-emerald-500 text-white rounded px-2"><Plus/></button></div>}
+                                </SectionCard>
+                                <SectionCard title="Préstamos a Terceros" icon={Users} total={totals.loansGiven} colorClass="bg-white" headerClass="bg-orange-50 text-orange-800" readOnly={isReadOnly}>
+                                    {data.loansGiven.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('loansGiven',i.id)} onAmountChange={(v)=>updateAmount('loansGiven',i.id,v)} onNameChange={(v)=>updateName('loansGiven',i.id,v)} showDelete={true} onDelete={()=>delItem('loansGiven',i.id)}/>)}
+                                    {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="A quién..." value={newLoanItem.name} onChange={e=>setNewLoanItem({...newLoanItem, name:e.target.value})}/><input type="number" className="border rounded px-2 py-1 w-20 text-sm" placeholder="$" value={newLoanItem.amount} onChange={e=>setNewLoanItem({...newLoanItem, amount:e.target.value})}/><button onClick={()=>addItem('loansGiven', newLoanItem, setNewLoanItem)} className="bg-orange-500 text-white rounded px-2"><Plus/></button></div>}
+                                </SectionCard>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
+    </script>
+</body>
+</html>
