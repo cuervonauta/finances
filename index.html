@@ -710,7 +710,7 @@
                             </button>
                             
                             <div className="pt-2 text-center">
-                                <p className="text-[10px] text-gray-400">Versión 2.9.1 (Full Expanded)</p>
+                                <p className="text-[10px] text-gray-400">Versión 2.9.2 (Hybrid View)</p>
                             </div>
                         </div>
                     </div>
@@ -1124,30 +1124,82 @@
                         <div className="flex-1 overflow-y-auto p-4 md:p-8">
                             <div className="max-w-6xl mx-auto space-y-6 fade-in">
                                 {currentView === 'dashboard' && (
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* Summary Card */}
-                                        <div className={`p-6 rounded-3xl shadow-sm relative overflow-hidden lg:col-span-2 ${isReadOnly ? 'bg-gray-200' : 'bg-white border border-gray-100'}`}>
-                                            <div className={`absolute top-0 right-0 p-6 opacity-5 ${currentTheme.text}`}><DollarSign size={140}/></div>
-                                            <div className="grid md:grid-cols-2 gap-8 relative z-10">
-                                                <div className="space-y-4">
-                                                    <div><label className="text-xs font-bold text-gray-400 uppercase">Ingresos Totales</label><div className="flex items-center gap-2 text-3xl font-bold text-gray-800"><span className="text-green-500">$</span><CurrencyInput disabled={isReadOnly || data.userSettings?.appMode === 'business'} value={data.userSettings?.appMode === 'business' ? totalBusinessIncome : data.income} onChange={val => setData({...data, income: val})} className={`bg-transparent w-full outline-none ${data.userSettings?.appMode === 'business' ? 'text-gray-600' : ''}`} placeholder="0"/>{data.userSettings?.appMode === 'business' && <span className="text-xs text-gray-400 font-normal">(Auto)</span>}</div></div>
-                                                    <div className="pt-2 border-t border-dashed border-gray-100"><label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Banknote size={12}/> Dinero Adicional</label><div className="flex items-center gap-2 text-xl font-bold text-gray-600"><span className="text-green-500/70">$</span><CurrencyInput disabled={isReadOnly} value={data.extraIncome || ''} onChange={val => setData({...data, extraIncome: val})} className="bg-transparent w-full outline-none" placeholder="0"/></div></div>
+                                    <>
+                                        {/* MOBILE DASHBOARD (Unified Card) */}
+                                        <div className={`md:hidden p-5 rounded-3xl shadow-lg relative overflow-hidden mb-6 ${isReadOnly ? 'bg-gray-200' : 'bg-white'}`}>
+                                            <div className={`absolute top-0 right-0 p-4 opacity-5 ${currentTheme.text}`}><DollarSign size={100}/></div>
+                                            <div className="mb-4 space-y-3">
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-400 uppercase">Ingresos Totales</label>
+                                                    <div className="flex items-center gap-2 text-2xl font-bold text-gray-800">
+                                                        <span className="text-green-500">$</span>
+                                                        <CurrencyInput disabled={isReadOnly || data.userSettings?.appMode === 'business'} value={data.userSettings?.appMode === 'business' ? totalBusinessIncome : data.income} onChange={val => setData({...data, income: val})} className={`bg-transparent w-full outline-none ${data.userSettings?.appMode === 'business' ? 'text-gray-600' : ''}`} placeholder="0"/>
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-4">
-                                                    <div><p className="text-gray-400 font-bold text-xs uppercase">Presupuesto de Gastos</p><p className="text-gray-800 font-bold text-2xl">{formatCurrency(totalOutflows)}</p><div className="flex flex-col gap-1 mt-1"><p className="text-xs font-bold text-emerald-600 bg-emerald-50 w-fit px-2 py-0.5 rounded">Ejecutado: {formatCurrency(totalPaidOutflows)}</p><p className="text-xs font-bold text-orange-600 bg-orange-50 w-fit px-2 py-0.5 rounded">Por Pagar: {formatCurrency(totalPendingToPay)}</p></div></div>
-                                                    <div><p className="text-gray-400 font-bold text-xs uppercase">Reservas</p><p className="text-gray-800 font-bold text-2xl">{formatCurrency(totalAhorros)}</p></div>
+                                                <div className="pt-2 border-t border-dashed border-gray-100">
+                                                    <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Banknote size={12}/> Dinero Adicional</label>
+                                                    <div className="flex items-center gap-2 text-lg font-bold text-gray-600">
+                                                        <span className="text-green-500/70">$</span>
+                                                        <CurrencyInput disabled={isReadOnly} value={data.extraIncome || ''} onChange={val => setData({...data, extraIncome: val})} className="bg-transparent w-full outline-none" placeholder="0"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
+                                                <div>
+                                                    <p className="text-gray-400 font-bold">Presupuesto</p>
+                                                    <p className="text-gray-800 font-bold text-lg leading-tight">{formatCurrency(totalOutflows)}</p>
+                                                    <div className="flex flex-col gap-0.5 mt-1">
+                                                        <p className="text-[10px] font-bold text-emerald-600">Ejecutado: {formatCurrency(totalPaidOutflows)}</p>
+                                                        <p className="text-[10px] font-bold text-orange-600">Por Pagar: {formatCurrency(totalPendingToPay)}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-400 font-bold">Reservas</p>
+                                                    <p className="text-gray-800 font-bold text-lg">{formatCurrency(totalAhorros)}</p>
+                                                    <div className="flex flex-col gap-0.5 mt-1">
+                                                        <p className="text-[10px] font-bold text-emerald-600">Ahorros: {formatCurrency(totals.savings)}</p>
+                                                        <p className="text-[10px] font-bold text-orange-600">Préstamos: {formatCurrency(totals.loansGiven)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+                                                <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+                                                    <span className="text-[10px] font-bold text-emerald-600/70 uppercase block mb-1 flex items-center gap-1"><Wallet size={10}/> Disponible Hoy</span>
+                                                    <span className={`text-lg font-bold leading-none ${currentCashBalance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(currentCashBalance)}</span>
+                                                </div>
+                                                <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100 text-right">
+                                                    <span className="text-[10px] font-bold text-blue-600/70 uppercase block mb-1">Saldo Final Est.</span>
+                                                    <span className={`text-lg font-bold leading-none ${projectedBalance >= 0 ? 'text-blue-600' : 'text-red-500'}`}>{formatCurrency(projectedBalance)}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Balances Card */}
-                                        <div className="lg:col-span-1 space-y-4">
-                                            <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 h-full flex flex-col justify-center"><span className="text-xs font-bold text-emerald-600/70 uppercase block mb-2 flex items-center gap-1"><Wallet size={14}/> Saldo Disponible Hoy</span><span className={`text-3xl font-bold leading-none ${currentCashBalance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(currentCashBalance)}</span></div>
-                                            <div className="bg-blue-50 rounded-3xl p-6 border border-blue-100 h-full flex flex-col justify-center text-right"><span className="text-xs font-bold text-blue-600/70 uppercase block mb-2">Saldo Final Estimado</span><span className={`text-3xl font-bold leading-none ${projectedBalance >= 0 ? 'text-blue-600' : 'text-red-500'}`}>{formatCurrency(projectedBalance)}</span></div>
+                                        {/* DESKTOP DASHBOARD (Grid Layout) */}
+                                        <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                            {/* Summary Card */}
+                                            <div className={`p-6 rounded-3xl shadow-sm relative overflow-hidden lg:col-span-2 ${isReadOnly ? 'bg-gray-200' : 'bg-white border border-gray-100'}`}>
+                                                <div className={`absolute top-0 right-0 p-6 opacity-5 ${currentTheme.text}`}><DollarSign size={140}/></div>
+                                                <div className="grid md:grid-cols-2 gap-8 relative z-10">
+                                                    <div className="space-y-4">
+                                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Ingresos Totales</label><div className="flex items-center gap-2 text-3xl font-bold text-gray-800"><span className="text-green-500">$</span><CurrencyInput disabled={isReadOnly || data.userSettings?.appMode === 'business'} value={data.userSettings?.appMode === 'business' ? totalBusinessIncome : data.income} onChange={val => setData({...data, income: val})} className={`bg-transparent w-full outline-none ${data.userSettings?.appMode === 'business' ? 'text-gray-600' : ''}`} placeholder="0"/>{data.userSettings?.appMode === 'business' && <span className="text-xs text-gray-400 font-normal">(Auto)</span>}</div></div>
+                                                        <div className="pt-2 border-t border-dashed border-gray-100"><label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Banknote size={12}/> Dinero Adicional</label><div className="flex items-center gap-2 text-xl font-bold text-gray-600"><span className="text-green-500/70">$</span><CurrencyInput disabled={isReadOnly} value={data.extraIncome || ''} onChange={val => setData({...data, extraIncome: val})} className="bg-transparent w-full outline-none" placeholder="0"/></div></div>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <div><p className="text-gray-400 font-bold text-xs uppercase">Presupuesto de Gastos</p><p className="text-gray-800 font-bold text-2xl">{formatCurrency(totalOutflows)}</p><div className="flex flex-col gap-1 mt-1"><p className="text-xs font-bold text-emerald-600 bg-emerald-50 w-fit px-2 py-0.5 rounded">Ejecutado: {formatCurrency(totalPaidOutflows)}</p><p className="text-xs font-bold text-orange-600 bg-orange-50 w-fit px-2 py-0.5 rounded">Por Pagar: {formatCurrency(totalPendingToPay)}</p></div></div>
+                                                        <div><p className="text-gray-400 font-bold text-xs uppercase">Reservas</p><p className="text-gray-800 font-bold text-2xl">{formatCurrency(totalAhorros)}</p></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Balances Card */}
+                                            <div className="lg:col-span-1 space-y-4">
+                                                <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 h-full flex flex-col justify-center"><span className="text-xs font-bold text-emerald-600/70 uppercase block mb-2 flex items-center gap-1"><Wallet size={14}/> Saldo Disponible Hoy</span><span className={`text-3xl font-bold leading-none ${currentCashBalance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(currentCashBalance)}</span></div>
+                                                <div className="bg-blue-50 rounded-3xl p-6 border border-blue-100 h-full flex flex-col justify-center text-right"><span className="text-xs font-bold text-blue-600/70 uppercase block mb-2">Saldo Final Estimado</span><span className={`text-3xl font-bold leading-none ${projectedBalance >= 0 ? 'text-blue-600' : 'text-red-500'}`}>{formatCurrency(projectedBalance)}</span></div>
+                                            </div>
                                         </div>
 
-                                        {/* Mobile Navigation Buttons (Hidden on Desktop) */}
-                                        <div className="md:hidden grid gap-3 lg:col-span-3">
+                                        {/* Mobile Navigation Buttons (Visible only on Mobile) */}
+                                        <div className="md:hidden grid gap-3">
                                             {data.userSettings?.appMode === 'business' && <CategoryButton title="Ingresos" icon={TrendingUp} total={totalBusinessIncome} color={{bg:'bg-emerald-600', text:'text-white'}} onClick={()=>setCurrentView('ingresos')} subtitle="Ventas y Servicios"/>}
                                             <CategoryButton title={LABELS.hogarTitle} icon={LABELS.hogarIcon} total={hogarPending} color={{bg:'bg-emerald-100', text:'text-emerald-600'}} onClick={()=>setCurrentView('hogar')} />
                                             <CategoryButton title="Tarjetas" icon={CreditCard} total={totals.creditCards} color={{bg:'bg-rose-100', text:'text-rose-600'}} onClick={()=>setCurrentView('tarjetas')} />
@@ -1168,29 +1220,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </>
                                 )}
 
                                 {currentView === 'ingresos' && data.userSettings?.appMode === 'business' && (
-                                    <div className="max-w-[720px] mx-auto space-y-6">
+                                    <div className="md:max-w-[720px] md:mx-auto space-y-6">
                                         {!data.businessIncome?.configSet ? (
-                                            <div className="flex justify-center">
-                                                <div className="bg-white p-8 rounded-3xl shadow-lg border border-emerald-100 max-w-md w-full">
-                                                    <div className="flex justify-center mb-6"><div className="p-4 bg-emerald-100 rounded-full text-emerald-600"><TrendingUp size={40}/></div></div>
-                                                    <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">Configura tus Ingresos</h2>
-                                                    <p className="text-center text-gray-500 text-sm mb-8">¿Qué tipo de ingresos recibes?</p>
-                                                    <div className="space-y-4 mb-8">
-                                                        {[{ id: 'products', label: 'Venta de Productos', icon: Package }, { id: 'workshops', label: 'Talleres / Capacitaciones', icon: Presentation }, { id: 'supplies', label: 'Venta de Insumos', icon: Store }].map(opt => (
-                                                            <label key={opt.id} className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${data.businessIncome.types[opt.id] ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
-                                                                <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={data.businessIncome.types[opt.id]} onChange={(e) => setData({ ...data, businessIncome: { ...data.businessIncome, types: { ...data.businessIncome.types, [opt.id]: e.target.checked } } })} />
-                                                                <opt.icon size={24}/>
-                                                                <span className="font-bold">{opt.label}</span>
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                    <button onClick={() => setData({...data, businessIncome: { ...data.businessIncome, configSet: true }})} disabled={!Object.values(data.businessIncome.types).some(Boolean)} className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-200">Comenzar</button>
-                                                </div>
-                                            </div>
+                                            <div className="flex justify-center"><div className="bg-white p-8 rounded-3xl shadow-lg border border-emerald-100 max-w-md w-full"><div className="flex justify-center mb-6"><div className="p-4 bg-emerald-100 rounded-full text-emerald-600"><TrendingUp size={40}/></div></div><h2 className="text-2xl font-bold text-center text-gray-800 mb-2">Configura tus Ingresos</h2><p className="text-center text-gray-500 text-sm mb-8">¿Qué tipo de ingresos recibes?</p><div className="space-y-4 mb-8">{[{ id: 'products', label: 'Venta de Productos', icon: Package }, { id: 'workshops', label: 'Talleres / Capacitaciones', icon: Presentation }, { id: 'supplies', label: 'Venta de Insumos', icon: Store }].map(opt => (<label key={opt.id} className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${data.businessIncome.types[opt.id] ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-600'}`}><input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={data.businessIncome.types[opt.id]} onChange={(e) => setData({ ...data, businessIncome: { ...data.businessIncome, types: { ...data.businessIncome.types, [opt.id]: e.target.checked } } })} /><opt.icon size={24}/><span className="font-bold">{opt.label}</span></label>))}</div><button onClick={() => setData({...data, businessIncome: { ...data.businessIncome, configSet: true }})} disabled={!Object.values(data.businessIncome.types).some(Boolean)} className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-200">Comenzar</button></div></div>
                                         ) : (
                                             <>
                                                 <div className="mb-4 flex justify-between items-end bg-emerald-600 rounded-[2rem] p-8 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
@@ -1198,75 +1234,16 @@
                                                     <div className="relative z-10">{!isReadOnly && <button onClick={() => setData({...data, businessIncome: {...data.businessIncome, configSet: false}})} className="text-xs text-emerald-200 hover:text-white bg-black/20 px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors"><Settings size={12}/> Configurar</button>}</div>
                                                     <div className="absolute right-0 bottom-0 p-4 opacity-10"><TrendingUp size={200}/></div>
                                                 </div>
-                                                
-                                                {data.businessIncome.types.products && (
-                                                    <SectionCard title="Venta de Productos" icon={Package} total={bizProductsTotal} colorClass="bg-white" headerClass="bg-blue-50 text-blue-800" readOnly={isReadOnly}>
-                                                        {data.businessIncome.items.products.map(i => (
-                                                            <div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                                                                <span className="text-sm font-medium text-gray-700">{i.name}</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>
-                                                                    {!isReadOnly && <button onClick={() => updateBizList('products', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                        {!isReadOnly && <AddItemRow placeholder="Producto..." name={newBizProduct.name} amount={newBizProduct.amount} onNameChange={e=>setNewBizProduct({...newBizProduct, name:e.target.value})} onAmountChange={val=>setNewBizProduct({...newBizProduct, amount:val})} onAdd={() => { if(!newBizProduct.name || !newBizProduct.amount) return; updateBizList('products', l => [...l, {id: Date.now(), name: newBizProduct.name, amount: Number(newBizProduct.amount)}]); setNewBizProduct({name:'', amount:''}); }} />}
-                                                    </SectionCard>
-                                                )}
-
-                                                {data.businessIncome.types.workshops && (
-                                                    <SectionCard title="Talleres / Capacitaciones" icon={Presentation} total={bizWorkshopsTotal} colorClass="bg-white" headerClass="bg-purple-50 text-purple-800" readOnly={isReadOnly}>
-                                                        {data.businessIncome.items.workshops.map(i => (
-                                                            <div key={i.id} className="py-3 border-b border-gray-50 last:border-0">
-                                                                <div className="flex justify-between items-start mb-1">
-                                                                    <span className="text-sm font-bold text-gray-700">{i.name}</span>
-                                                                    {!isReadOnly && <button onClick={() => updateBizList('workshops', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}
-                                                                </div>
-                                                                <div className="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                                                                    <div>{formatCurrency(i.pricePerPerson)} x {i.count} pers.</div>
-                                                                    <div className="font-bold text-purple-600 text-sm">{formatCurrency(i.pricePerPerson * i.count)}</div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                        {!isReadOnly && (
-                                                            <div className="mt-2 p-3 border border-dashed border-purple-200 rounded-xl bg-purple-50/30">
-                                                                <input className="w-full bg-transparent text-sm font-medium outline-none placeholder-gray-400 mb-2" placeholder="Nombre Taller..." value={newBizWorkshop.name} onChange={e => setNewBizWorkshop({...newBizWorkshop, name: e.target.value})} />
-                                                                <div className="flex gap-2">
-                                                                    <div className="relative flex-1">
-                                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
-                                                                        <CurrencyInput className="w-full bg-white border border-gray-200 rounded-lg pl-4 pr-2 py-1.5 text-xs outline-none focus:border-purple-400" placeholder="Valor p/p" value={newBizWorkshop.price} onChange={val => setNewBizWorkshop({...newBizWorkshop, price: val})} />
-                                                                    </div>
-                                                                    <div className="relative w-20">
-                                                                        <input type="number" className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-400 text-center" placeholder="N° Pers" value={newBizWorkshop.count} onChange={e => setNewBizWorkshop({...newBizWorkshop, count: e.target.value})} />
-                                                                    </div>
-                                                                    <button onClick={() => { if(!newBizWorkshop.name || !newBizWorkshop.price || !newBizWorkshop.count) return; updateBizList('workshops', l => [...l, {id: Date.now(), name: newBizWorkshop.name, pricePerPerson: Number(newBizWorkshop.price), count: Number(newBizWorkshop.count)}]); setNewBizWorkshop({name:'', price:'', count:''}); }} className="bg-purple-600 text-white rounded-lg px-3 hover:bg-purple-700"><Plus size={16}/></button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </SectionCard>
-                                                )}
-
-                                                {data.businessIncome.types.supplies && (
-                                                    <SectionCard title="Venta de Insumos" icon={Store} total={bizSuppliesTotal} colorClass="bg-white" headerClass="bg-orange-50 text-orange-800" readOnly={isReadOnly}>
-                                                        {data.businessIncome.items.supplies.map(i => (
-                                                            <div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                                                                <span className="text-sm font-medium text-gray-700">{i.name}</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>
-                                                                    {!isReadOnly && <button onClick={() => updateBizList('supplies', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                        {!isReadOnly && <AddItemRow placeholder="Insumo..." name={newBizSupply.name} amount={newBizSupply.amount} onNameChange={e=>setNewBizSupply({...newBizSupply, name:e.target.value})} onAmountChange={val=>setNewBizSupply({...newBizSupply, amount:val})} onAdd={() => { if(!newBizSupply.name || !newBizSupply.amount) return; updateBizList('supplies', l => [...l, {id: Date.now(), name: newBizSupply.name, amount: Number(newBizSupply.amount)}]); setNewBizSupply({name:'', amount:''}); }} />}
-                                                    </SectionCard>
-                                                )}
+                                                {data.businessIncome.types.products && (<SectionCard title="Venta de Productos" icon={Package} total={bizProductsTotal} colorClass="bg-white" headerClass="bg-blue-50 text-blue-800" readOnly={isReadOnly}>{data.businessIncome.items.products.map(i => (<div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span className="text-sm font-medium text-gray-700">{i.name}</span><div className="flex items-center gap-2"><span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>{!isReadOnly && <button onClick={() => updateBizList('products', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}</div></div>))}{!isReadOnly && <AddItemRow placeholder="Producto..." name={newBizProduct.name} amount={newBizProduct.amount} onNameChange={e=>setNewBizProduct({...newBizProduct, name:e.target.value})} onAmountChange={val=>setNewBizProduct({...newBizProduct, amount:val})} onAdd={() => { if(!newBizProduct.name || !newBizProduct.amount) return; updateBizList('products', l => [...l, {id: Date.now(), name: newBizProduct.name, amount: Number(newBizProduct.amount)}]); setNewBizProduct({name:'', amount:''}); }} />}</SectionCard>)}
+                                                {data.businessIncome.types.workshops && (<SectionCard title="Talleres / Capacitaciones" icon={Presentation} total={bizWorkshopsTotal} colorClass="bg-white" headerClass="bg-purple-50 text-purple-800" readOnly={isReadOnly}>{data.businessIncome.items.workshops.map(i => (<div key={i.id} className="py-3 border-b border-gray-50 last:border-0"><div className="flex justify-between items-start mb-1"><span className="text-sm font-bold text-gray-700">{i.name}</span>{!isReadOnly && <button onClick={() => updateBizList('workshops', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}</div><div className="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg"><div>{formatCurrency(i.pricePerPerson)} x {i.count} pers.</div><div className="font-bold text-purple-600 text-sm">{formatCurrency(i.pricePerPerson * i.count)}</div></div></div>))}{!isReadOnly && (<div className="mt-2 p-3 border border-dashed border-purple-200 rounded-xl bg-purple-50/30"><input className="w-full bg-transparent text-sm font-medium outline-none placeholder-gray-400 mb-2" placeholder="Nombre Taller..." value={newBizWorkshop.name} onChange={e => setNewBizWorkshop({...newBizWorkshop, name: e.target.value})} /><div className="flex gap-2"><div className="relative flex-1"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span><CurrencyInput className="w-full bg-white border border-gray-200 rounded-lg pl-4 pr-2 py-1.5 text-xs outline-none focus:border-purple-400" placeholder="Valor p/p" value={newBizWorkshop.price} onChange={val => setNewBizWorkshop({...newBizWorkshop, price: val})} /></div><div className="relative w-20"><input type="number" className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-400 text-center" placeholder="N° Pers" value={newBizWorkshop.count} onChange={e => setNewBizWorkshop({...newBizWorkshop, count: e.target.value})} /></div><button onClick={() => { if(!newBizWorkshop.name || !newBizWorkshop.price || !newBizWorkshop.count) return; updateBizList('workshops', l => [...l, {id: Date.now(), name: newBizWorkshop.name, pricePerPerson: Number(newBizWorkshop.price), count: Number(newBizWorkshop.count)}]); setNewBizWorkshop({name:'', price:'', count:''}); }} className="bg-purple-600 text-white rounded-lg px-3 hover:bg-purple-700"><Plus size={16}/></button></div></div>)}</SectionCard>)}
+                                                {data.businessIncome.types.supplies && (<SectionCard title="Venta de Insumos" icon={Store} total={bizSuppliesTotal} colorClass="bg-white" headerClass="bg-orange-50 text-orange-800" readOnly={isReadOnly}>{data.businessIncome.items.supplies.map(i => (<div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span className="text-sm font-medium text-gray-700">{i.name}</span><div className="flex items-center gap-2"><span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>{!isReadOnly && <button onClick={() => updateBizList('supplies', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}</div></div>))}{!isReadOnly && <AddItemRow placeholder="Insumo..." name={newBizSupply.name} amount={newBizSupply.amount} onNameChange={e=>setNewBizSupply({...newBizSupply, name:e.target.value})} onAmountChange={val=>setNewBizSupply({...newBizSupply, amount:val})} onAdd={() => { if(!newBizSupply.name || !newBizSupply.amount) return; updateBizList('supplies', l => [...l, {id: Date.now(), name: newBizSupply.name, amount: Number(newBizSupply.amount)}]); setNewBizSupply({name:'', amount:''}); }} />}</SectionCard>)}
                                             </>
                                         )}
                                     </div>
                                 )}
 
                                 {currentView === 'hogar' && (
-                                    <div className="max-w-[720px] mx-auto space-y-6">
+                                    <div className="md:max-w-[720px] md:mx-auto space-y-6">
                                         <div className="rounded-[2rem] p-6 border transition-all duration-500 relative overflow-hidden bg-white shadow-sm border-gray-200">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3"><div className={`p-2.5 rounded-xl bg-gray-100 text-gray-600`}><LayoutDashboard size={20}/></div><div><h3 className="font-bold text-gray-800 text-sm">Resumen {LABELS.hogarTitle}</h3><p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{new Date().toLocaleString('es-CL', { month: 'long' })}</p></div></div>
@@ -1296,7 +1273,7 @@
                                 )}
 
                                 {currentView === 'tarjetas' && (
-                                    <div className="max-w-[720px] mx-auto">
+                                    <div className="md:max-w-[720px] md:mx-auto">
                                         <SectionCard title="Gestión de Tarjetas" icon={CreditCard} total={totals.creditCards} headerClass={`text-rose-800 ${isReadOnly ? 'bg-gray-200 text-gray-600' : 'bg-rose-50'}`} readOnly={isReadOnly}>
                                             <div className="space-y-6 mt-4">
                                                 {uniqueBanks.map(bank => { const bankItems = (data.creditCards || []).filter(item => item.bank === bank); return (<div key={bank} className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden h-full flex flex-col"><div className="bg-rose-50/50 px-4 py-3 border-b border-rose-100 flex justify-between items-center"><h4 className="text-xs font-bold text-rose-900 uppercase tracking-widest flex items-center gap-2"><Building2 size={14} className="text-rose-400"/> {bank}</h4>{!isReadOnly && <button onClick={() => { if(window.confirm(`¿Eliminar ${bank}?`)) updateList('creditCards', list => list.filter(c => c.bank !== bank)) }} className="text-rose-300 hover:text-rose-600"><Trash2 size={16} /></button>}</div><div className="px-4 py-3 flex-1">{bankItems.map(item => (<DetailedCreditCardRow key={item.id} item={item} readOnly={isReadOnly} onUpdate={(field, val) => updateCard(item.id, field, val)} onDelete={() => deleteItem('creditCards', item.id)}/>))}</div></div>) })}
@@ -1308,7 +1285,7 @@
                                 )}
 
                                 {currentView === 'supermercado' && (
-                                    <div className="max-w-[720px] mx-auto space-y-6">
+                                    <div className="md:max-w-[720px] md:mx-auto space-y-6">
                                         {!activeListId ? (
                                             <>
                                                 <SectionCard title={LABELS.superTitle} icon={ShoppingCart} total={totals.supermarket} headerClass={`text-gray-700 ${isReadOnly ? 'bg-gray-200' : 'bg-gray-50'}`} readOnly={isReadOnly}>
@@ -1348,7 +1325,7 @@
                                 )}
 
                                 {currentView === 'graficos' && (
-                                    <div className="max-w-[720px] mx-auto space-y-6">
+                                    <div className="md:max-w-[720px] md:mx-auto space-y-6">
                                         <div className="col-span-full flex bg-gray-100 p-1 rounded-xl gap-1 max-w-md mx-auto mb-4">{[{id: 'general', label: 'Resumen'}, {id: 'tarjetas', label: 'Tarjetas'}, {id: 'ahorro', label: 'Ahorro'}].map(t => (<button key={t.id} onClick={() => setChartTab(t.id)} className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${chartTab === t.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t.label}</button>))}</div>
                                         {chartTab === 'general' && <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100"><h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2"><PieChart size={24} className="text-indigo-500"/> Distribución de Gastos</h3><SimplePieChart data={expenseDistribution} /></div>}
                                         {chartTab === 'tarjetas' && <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100"><h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2"><CreditCard size={24} className="text-rose-500"/> Deuda vs Pagos</h3>{creditCardUsage.length === 0 ? <p className="text-gray-400 italic text-center py-4">No hay tarjetas registradas.</p> : creditCardUsage.map((c, i) => <ProgressBar key={i} label={c.label} value={c.paid} total={c.total} colorClass="bg-rose-500" />)}</div>}
@@ -1357,7 +1334,7 @@
                                 )}
 
                                 {currentView === 'ahorros' && (
-                                    <div className="max-w-[720px] mx-auto space-y-6">
+                                    <div className="md:max-w-[720px] md:mx-auto space-y-6">
                                         <SectionCard title="Reservas" icon={PiggyBank} total={totals.savings} colorClass="bg-white" headerClass="bg-emerald-50 text-emerald-800" readOnly={isReadOnly}>
                                             {data.savings.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('savings',i.id)} onAmountChange={(v)=>updateAmount('savings',i.id,v)} onNameChange={(v)=>updateName('savings',i.id,v)} showDelete={true} onDelete={()=>delItem('savings',i.id)}/>)}
                                             {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Meta..." value={newSavingsItem.name} onChange={e=>setNewSavingsItem({...newSavingsItem, name:e.target.value})}/><CurrencyInput className="border rounded px-2 py-1 w-24 text-sm" placeholder="$" value={newSavingsItem.amount} onChange={val=>setNewSavingsItem({...newSavingsItem, amount:val})}/><button onClick={()=>addItem('savings', newSavingsItem, setNewSavingsItem)} className="bg-emerald-500 text-white rounded px-2"><Plus/></button></div>}
