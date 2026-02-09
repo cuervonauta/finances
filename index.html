@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#4f46e5">
-    <title>Mis Finanzas | Control Mensual</title>
+    <title>Finanzas | Control Total</title>
     
     <!-- Icono de pestaña -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
@@ -21,8 +21,10 @@
     <style>
         body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; background-color: #f3f4f6; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         /* Loader Inicial */
         #initial-loader { 
@@ -49,7 +51,6 @@
 </head>
 <body>
     <div id="root">
-        <!-- Pantalla de carga visible antes de que React inicie -->
         <div id="initial-loader">
             <div class="spinner"></div>
             <h2 style="font-size: 1.2rem; font-weight: bold; color: #374151;">Cargando App...</h2>
@@ -58,35 +59,41 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef, Component } = React;
-        const USD_VALUE = 950; // Valor referencia Dólar
+        const USD_VALUE = 950; 
 
-        // --- MANEJO DE ERRORES ---
+        // --- SISTEMA DE TEMAS ---
+        const THEMES = {
+            indigo: { name: 'Índigo', bg: 'bg-indigo-600', border: 'border-indigo-200', text: 'text-indigo-600', light: 'bg-indigo-50', hover: 'hover:bg-indigo-700' },
+            emerald: { name: 'Esmeralda', bg: 'bg-emerald-600', border: 'border-emerald-200', text: 'text-emerald-600', light: 'bg-emerald-50', hover: 'hover:bg-emerald-700' },
+            rose: { name: 'Rosa', bg: 'bg-rose-600', border: 'border-rose-200', text: 'text-rose-600', light: 'bg-rose-50', hover: 'hover:bg-rose-700' },
+            blue: { name: 'Azul', bg: 'bg-blue-600', border: 'border-blue-200', text: 'text-blue-600', light: 'bg-blue-50', hover: 'hover:bg-blue-700' },
+            purple: { name: 'Púrpura', bg: 'bg-purple-600', border: 'border-purple-200', text: 'text-purple-600', light: 'bg-purple-50', hover: 'hover:bg-purple-700' },
+            slate: { name: 'Oscuro', bg: 'bg-slate-800', border: 'border-slate-300', text: 'text-slate-800', light: 'bg-slate-100', hover: 'hover:bg-slate-900' },
+        };
+
         class ErrorBoundary extends Component {
             constructor(props) { super(props); this.state = { hasError: false, error: null }; }
             static getDerivedStateFromError(error) { return { hasError: true, error }; }
             componentDidCatch(error, errorInfo) { console.error("Error App:", error, errorInfo); }
             render() {
-                if (this.state.hasError) {
-                    return (
-                        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-                            <h1 className="text-2xl font-bold text-red-600 mb-2">¡Ups! Algo salió mal</h1>
-                            <p className="text-sm text-gray-500 mb-4">Intenta recargar la página.</p>
-                            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">♻️ Reiniciar Todo</button>
-                        </div>
-                    );
-                }
+                if (this.state.hasError) return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                        <h1 className="text-2xl font-bold text-red-600 mb-2">¡Ups! Algo salió mal</h1>
+                        <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">♻️ Reiniciar Todo</button>
+                    </div>
+                );
                 return this.props.children;
             }
         }
 
-        // --- ICONOS (SVG) ---
-        const Icon = ({ path, size = 24, className = "" }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{ __html: path }} />
-        );
+        // --- ICONOS ---
+        const Icon = ({ path, size = 24, className = "" }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{ __html: path }} />);
         
         const ICONS = {
+            Google: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="none"/><path d="M20.283 10.356h-8.327v3.451h4.792c-.446 2.193-2.313 3.453-4.792 3.453a5.27 5.27 0 0 1-5.279-5.28 5.27 5.27 0 0 1 5.279-5.279c1.259 0 2.397.447 3.29 1.178l2.6-2.599c-1.584-1.381-3.615-2.233-5.89-2.233a8.908 8.908 0 0 0-8.934 8.934 8.907 8.907 0 0 0 8.934 8.934c4.467 0 8.529-3.249 8.529-8.934 0-.528-.081-1.097-.202-1.625z" fill="currentColor"/>',
             Wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
             Home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+            Store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/>',
             CreditCard: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
             ShoppingCart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
             Coffee: '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/>',
@@ -126,7 +133,12 @@
             LayoutDashboard: '<rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />',
             Banknote: '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
             List: '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>',
-            AlertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
+            AlertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+            UserCircle: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>',
+            Palette: '<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+            Logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+            Briefcase: '<rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+            User: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
         };
 
         const Icons = Object.keys(ICONS).reduce((acc, key) => {
@@ -140,13 +152,138 @@
             Building2, FolderPlus, Edit2, Calendar, Lock, Unlock, ChevronDown, ChevronUp,
             PiggyBank, Users, ArrowLeft, ChevronRight, CalendarDays, Cloud, 
             Check, Loader2, Settings, X, BarChart3, PieChart, Download, Upload, FileJson, Info, LayoutDashboard, Banknote,
-            List, AlertTriangle
+            List, AlertTriangle, UserCircle, Palette, Google, Logout, Briefcase, User, Store
         } = Icons;
 
         const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
         const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        // --- COMPONENTES UI ---
+        // --- COMPONENTES LOGIN & ONBOARDING ---
+        const LoginScreen = ({ onLogin }) => {
+            const [isLoading, setIsLoading] = useState(false);
+            
+            const handleLogin = () => {
+                setIsLoading(true);
+                // Simulación de delay de red para Google Auth
+                setTimeout(() => {
+                    const mockUser = {
+                        // name: "Usuario Google", // Ya no forzamos el nombre aquí
+                        email: "usuario@gmail.com",
+                        photo: null
+                    };
+                    onLogin(mockUser);
+                }, 1500);
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white slide-up">
+                    <div className="w-full max-w-sm">
+                        <div className="flex justify-center mb-8">
+                            <div className="p-4 bg-indigo-50 rounded-2xl">
+                                <span className="text-4xl">💸</span>
+                            </div>
+                        </div>
+                        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">Bienvenido a Mis Finanzas</h1>
+                        <p className="text-center text-gray-500 mb-8 text-sm">Gestiona tus ingresos y gastos de forma inteligente y segura.</p>
+                        
+                        <div className="space-y-4">
+                            <button 
+                                onClick={handleLogin}
+                                disabled={isLoading}
+                                className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl hover:bg-gray-50 transition-all shadow-sm relative overflow-hidden"
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="animate-spin text-gray-400" size={20}/>
+                                ) : (
+                                    <>
+                                        <Google size={20}/> <span>Continuar con Google</span>
+                                    </>
+                                )}
+                            </button>
+                            <p className="text-xs text-center text-gray-400 mt-6">
+                                Al continuar, aceptas nuestros términos de servicio y política de privacidad.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- NUEVO COMPONENTE: PREGUNTA DE NOMBRE ---
+        const NameSetupScreen = ({ onSaveName }) => {
+            const [name, setName] = useState('');
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white slide-up">
+                    <div className="w-full max-w-sm">
+                        <div className="flex justify-center mb-6">
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                <UserCircle size={32}/>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">¡Hola!</h2>
+                        <p className="text-center text-gray-500 mb-8 text-sm">¿Cómo te gustaría que te llamemos?</p>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-1 block">Tu Nombre</label>
+                                <input 
+                                    autoFocus
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-lg font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                                    placeholder="Ej. Alex"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSaveName(name)}
+                                />
+                            </div>
+                            <button 
+                                onClick={() => onSaveName(name)}
+                                disabled={!name.trim()}
+                                className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200"
+                            >
+                                Continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const OnboardingScreen = ({ onSelectMode }) => {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 slide-up">
+                    <div className="w-full max-w-sm">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Configuremos tu espacio</h2>
+                        <p className="text-gray-500 mb-8 text-sm">¿Qué tipo de finanzas deseas gestionar?</p>
+                        
+                        <div className="grid gap-4">
+                            <button 
+                                onClick={() => onSelectMode('personal')}
+                                className="group bg-white p-6 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all text-left"
+                            >
+                                <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <User size={24}/>
+                                </div>
+                                <h3 className="font-bold text-gray-800 text-lg">Finanzas Personales</h3>
+                                <p className="text-xs text-gray-500 mt-1">Hogar, suscripciones, tarjetas de crédito y ahorros personales.</p>
+                            </button>
+
+                            <button 
+                                onClick={() => onSelectMode('business')}
+                                className="group bg-white p-6 rounded-2xl border border-gray-200 hover:border-emerald-500 hover:shadow-md transition-all text-left"
+                            >
+                                <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                    <Briefcase size={24}/>
+                                </div>
+                                <h3 className="font-bold text-gray-800 text-lg">Mi Negocio</h3>
+                                <p className="text-xs text-gray-500 mt-1">Costos operativos, proveedores, insumos y flujo de caja.</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- COMPONENTES UI EXISTENTES ---
         const SimplePieChart = ({ data }) => {
             const total = data.reduce((acc, item) => acc + item.value, 0);
             if (total === 0) return <div className="flex flex-col items-center justify-center h-48 text-gray-400"><PieChart size={32} className="mb-2 opacity-50"/><p className="text-xs">Sin datos</p></div>;
@@ -176,7 +313,10 @@
                     <div className="w-full space-y-1">
                         {data.map((item, index) => (
                             <div key={index} className="flex justify-between items-center text-xs">
-                                <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></span><span className="text-gray-600">{item.label}</span></div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                    <span className="text-gray-600">{item.label}</span>
+                                </div>
                                 <span className="font-bold text-gray-800">{formatCurrency(item.value)}</span>
                             </div>
                         ))}
@@ -193,13 +333,11 @@
             return (
                 <section className={`rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6 bg-white transition-all hover:shadow-md`}>
                     <div className={`px-5 py-4 flex justify-between items-start relative overflow-hidden ${headerClass}`}>
-                        {/* Barra de Progreso de Fondo */}
                         {hasPaidProp && (
                             <div className="absolute bottom-0 left-0 w-full h-1 bg-black/5">
                                 <div className="h-full bg-current opacity-40 transition-all duration-500" style={{ width: `${progress}%` }}></div>
                             </div>
                         )}
-
                         <div className="flex items-center gap-3 mt-0.5 flex-1 relative z-10">
                             <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm shadow-sm">
                                 <Icon size={18} className="shrink-0" />
@@ -208,33 +346,25 @@
                                 <input 
                                     type="text" 
                                     value={title} 
-                                    onChange={(e) => onTitleChange(e.target.value)}
+                                    onChange={(e) => onTitleChange(e.target.value)} 
                                     className="font-bold text-lg bg-transparent border-b border-dashed border-current/30 focus:border-current focus:outline-none w-full mr-2 placeholder-current/50"
                                 />
                             ) : (
                                 <span className="font-bold text-lg">{title}</span>
                             )}
                         </div>
-                        
                         <div className="flex flex-col items-end gap-0.5 shrink-0 relative z-10">
-                             {/* Valor Principal: El Restante (Lo que FALTA) */}
-                            <span className="text-xl font-extrabold leading-none tracking-tight">
-                                {formatCurrency(hasPaidProp ? remaining : total)}
-                            </span>
-                            
+                            <span className="text-xl font-extrabold leading-none tracking-tight">{formatCurrency(hasPaidProp ? remaining : total)}</span>
                             {hasPaidProp && (
                                 <div className="flex items-center gap-2 text-[10px] font-bold opacity-70 bg-white/20 px-2 py-0.5 rounded-full mt-1">
-                                     <span>{Math.round(progress)}% Pagado</span>
+                                    <span>{Math.round(progress)}% Pagado</span>
                                 </div>
                             )}
-
                             {onDeleteSection && !readOnly && <button onClick={onDeleteSection} className="opacity-50 hover:opacity-100 mt-1 absolute -right-2 -top-2 p-2"><Trash2 size={16}/></button>}
                         </div>
                     </div>
                     <div className={`p-2 ${readOnly ? 'pointer-events-none opacity-80' : ''}`}>
-                        <div className="space-y-1">
-                            {children}
-                        </div>
+                        <div className="space-y-1">{children}</div>
                     </div>
                 </section>
             );
@@ -242,34 +372,37 @@
 
         const CategoryButton = ({ title, icon: Icon, color, onClick, total, subtitle, showAmount = true }) => (
             <button onClick={onClick} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all active:scale-95 mb-3">
-                <div className="flex items-center gap-3"><div className={`p-3 rounded-xl ${color.bg} ${color.text}`}><Icon size={24}/></div><div className="text-left"><h3 className="font-bold text-gray-800">{title}</h3><p className="text-xs text-gray-400">{subtitle || "Ver detalles"}</p></div></div>
-                <div className="flex items-center gap-2">{showAmount && <span className="text-xs font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded">{formatCurrency(total)}</span>}<ChevronRight className="text-gray-300" size={20}/></div>
+                <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-xl ${color.bg} ${color.text}`}><Icon size={24}/></div>
+                    <div className="text-left"><h3 className="font-bold text-gray-800">{title}</h3><p className="text-xs text-gray-400">{subtitle || "Ver detalles"}</p></div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {showAmount && <span className="text-xs font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded">{formatCurrency(total)}</span>}
+                    <ChevronRight className="text-gray-300" size={20}/>
+                </div>
             </button>
         );
 
-        // --- COMPONENTE INPUT MONEDA ---
         const CurrencyInput = ({ value, onChange, className, placeholder, disabled, autoFocus }) => {
-            const format = (val) => {
-                if (val === '' || val === undefined || val === null) return '';
-                return val.toString().replace(/\./g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            const format = (val) => { 
+                if (val === '' || val === undefined || val === null) return ''; 
+                return val.toString().replace(/\./g, '').replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
             };
-
-            const handleChange = (e) => {
-                const raw = e.target.value.replace(/\./g, '');
-                if (!/^\d*$/.test(raw)) return;
-                onChange(raw);
+            const handleChange = (e) => { 
+                const raw = e.target.value.replace(/\./g, ''); 
+                if (!/^\d*$/.test(raw)) return; 
+                onChange(raw); 
             };
-
             return (
                 <input 
                     type="text" 
-                    inputMode="numeric"
+                    inputMode="numeric" 
                     value={format(value)} 
                     onChange={handleChange} 
                     className={className} 
                     placeholder={placeholder} 
-                    disabled={disabled}
-                    autoFocus={autoFocus}
+                    disabled={disabled} 
+                    autoFocus={autoFocus} 
                 />
             );
         };
@@ -288,48 +421,22 @@
                 </div>
                 <div className="flex items-center gap-2 pl-2">
                     <span className="text-[10px] text-gray-400 mt-0.5">$</span>
-                    <CurrencyInput 
-                        disabled={readOnly} 
-                        value={item.amount} 
-                        onChange={(val) => onAmountChange(val)} 
-                        className={`w-20 text-right font-bold bg-transparent outline-none text-sm ${item.paid ? 'text-gray-400' : 'text-gray-800'}`}
-                    />
+                    <CurrencyInput disabled={readOnly} value={item.amount} onChange={(val) => onAmountChange(val)} className={`w-20 text-right font-bold bg-transparent outline-none text-sm ${item.paid ? 'text-gray-400' : 'text-gray-800'}`}/>
                     {showDelete && !readOnly && <button onClick={onDelete} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1"><Trash2 size={14}/></button>}
                 </div>
             </div>
         );
 
-        // Componente para Agregar Items (Estilo Moderno)
         const AddItemRow = ({ name, amount, onNameChange, onAmountChange, onAdd, placeholder = "Nuevo item..." }) => (
             <div className="mt-2 px-3 py-2 border border-dashed border-gray-200 rounded-xl flex items-center gap-2 group hover:border-gray-300 hover:bg-gray-50/50 transition-all focus-within:border-indigo-300 focus-within:bg-indigo-50/10">
-                <div className="p-1.5 rounded-lg bg-gray-100 text-gray-400 group-hover:text-gray-600 transition-colors">
-                    <Plus size={14}/>
-                </div>
-                <input 
-                    className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 font-medium" 
-                    placeholder={placeholder} 
-                    value={name} 
-                    onChange={onNameChange}
-                    onKeyDown={(e) => e.key === 'Enter' && onAdd()}
-                />
+                <div className="p-1.5 rounded-lg bg-gray-100 text-gray-400 group-hover:text-gray-600 transition-colors"><Plus size={14}/></div>
+                <input className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 font-medium" placeholder={placeholder} value={name} onChange={onNameChange} onKeyDown={(e) => e.key === 'Enter' && onAdd()} />
                 <div className="w-px h-4 bg-gray-200"></div>
                 <div className="relative w-20">
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
-                    <CurrencyInput 
-                        className="w-full bg-transparent text-right text-sm font-bold outline-none placeholder-gray-300 text-gray-700" 
-                        placeholder="0" 
-                        value={amount} 
-                        onChange={onAmountChange}
-                        onKeyDown={(e) => e.key === 'Enter' && onAdd()}
-                    />
+                    <CurrencyInput className="w-full bg-transparent text-right text-sm font-bold outline-none placeholder-gray-300 text-gray-700" placeholder="0" value={amount} onChange={onAmountChange} onKeyDown={(e) => e.key === 'Enter' && onAdd()} />
                 </div>
-                <button 
-                    onClick={onAdd} 
-                    disabled={!name || !amount}
-                    className="p-1.5 rounded-lg bg-gray-900 text-white opacity-0 group-focus-within:opacity-100 disabled:opacity-0 hover:bg-black transition-all shadow-sm"
-                >
-                    <Check size={14}/>
-                </button>
+                <button onClick={onAdd} disabled={!name || !amount} className="p-1.5 rounded-lg bg-gray-900 text-white opacity-0 group-focus-within:opacity-100 disabled:opacity-0 hover:bg-black transition-all shadow-sm"><Check size={14}/></button>
             </div>
         );
 
@@ -337,13 +444,10 @@
             const isPaid = item.status === 'paid' || item.status === 'no_debt';
             const isNoDebt = item.status === 'no_debt';
             const isLinea = item.type === 'linea';
-
-            // Calculation for Linea Available
             const available = (Number(item.limit) || 0) - (Number(item.totalDebt) || 0);
             
             return (
                 <div className="border-b border-rose-100 last:border-0 py-4">
-                    {/* Header: Name, Status, Delete */}
                     <div className="flex justify-between items-start mb-3">
                         <div>
                             <span className="text-xs font-bold text-rose-800 uppercase tracking-wide flex items-center gap-1">
@@ -351,15 +455,11 @@
                                 {item.name}
                             </span>
                             <div className="flex items-center gap-2 mt-1.5">
-                                <select
-                                    disabled={readOnly}
-                                    value={item.status}
-                                    onChange={(e) => onUpdate('status', e.target.value)}
-                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full appearance-none border transition-colors cursor-pointer outline-none ${
-                                        item.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                        item.status === 'no_debt' ? 'bg-gray-50 text-gray-500 border-gray-100' :
-                                        'bg-white text-rose-600 border-rose-200 shadow-sm'
-                                    }`}
+                                <select 
+                                    disabled={readOnly} 
+                                    value={item.status} 
+                                    onChange={(e) => onUpdate('status', e.target.value)} 
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full appearance-none border transition-colors cursor-pointer outline-none ${item.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : item.status === 'no_debt' ? 'bg-gray-50 text-gray-500 border-gray-100' : 'bg-white text-rose-600 border-rose-200 shadow-sm'}`}
                                 >
                                     <option value="pending">Pendiente de Pago</option>
                                     <option value="paid">Pagado Completo</option>
@@ -372,7 +472,6 @@
 
                     {!isNoDebt && (
                         <div className="space-y-3 bg-rose-50/30 p-3 rounded-xl">
-                            {/* Logic for Credit Cards (Pesos & Dolares) */}
                             {!isLinea && (
                                 <>
                                     <div className="grid grid-cols-2 gap-3">
@@ -380,24 +479,12 @@
                                             <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Deuda Total (Info)</label>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
-                                                <CurrencyInput
-                                                    disabled={readOnly}
-                                                    value={item.totalDebt}
-                                                    onChange={(val) => onUpdate('totalDebt', val)}
-                                                    className="w-full bg-white border border-gray-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 outline-none"
-                                                    placeholder="0"
-                                                />
+                                                <CurrencyInput disabled={readOnly} value={item.totalDebt} onChange={(val) => onUpdate('totalDebt', val)} className="w-full bg-white border border-gray-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 outline-none" placeholder="0" />
                                             </div>
                                         </div>
                                         <div>
                                             <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Fecha Corte</label>
-                                            <input
-                                                type="date"
-                                                disabled={readOnly}
-                                                value={item.cutoffDate || ''}
-                                                onChange={(e) => onUpdate('cutoffDate', e.target.value)}
-                                                className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 outline-none"
-                                            />
+                                            <input type="date" disabled={readOnly} value={item.cutoffDate || ''} onChange={(e) => onUpdate('cutoffDate', e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 outline-none" />
                                         </div>
                                     </div>
                                     <div className="h-px bg-rose-100/50"></div>
@@ -406,60 +493,34 @@
                                             <label className="text-[9px] text-rose-600/70 font-bold uppercase block mb-1">Facturado (A Pagar)</label>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-rose-400 text-[10px]">$</span>
-                                                <CurrencyInput
-                                                    disabled={readOnly}
-                                                    value={item.monthlyQuota}
-                                                    onChange={(val) => onUpdate('monthlyQuota', val)}
-                                                    className="w-full bg-white border border-rose-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-rose-700 focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none shadow-sm"
-                                                    placeholder="0"
-                                                />
+                                                <CurrencyInput disabled={readOnly} value={item.monthlyQuota} onChange={(val) => onUpdate('monthlyQuota', val)} className="w-full bg-white border border-rose-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-rose-700 focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none shadow-sm" placeholder="0" />
                                             </div>
                                         </div>
                                         <div>
                                             <label className="text-[9px] text-emerald-600/70 font-bold uppercase block mb-1">Abonado</label>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-emerald-400 text-[10px]">$</span>
-                                                <CurrencyInput
-                                                    disabled={readOnly}
-                                                    value={item.payedAmount}
-                                                    onChange={(val) => onUpdate('payedAmount', val)}
-                                                    className="w-full bg-white border border-emerald-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-emerald-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none shadow-sm"
-                                                    placeholder="0"
-                                                />
+                                                <CurrencyInput disabled={readOnly} value={item.payedAmount} onChange={(val) => onUpdate('payedAmount', val)} className="w-full bg-white border border-emerald-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-emerald-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none shadow-sm" placeholder="0" />
                                             </div>
                                         </div>
                                     </div>
                                 </>
                             )}
-
-                            {/* Logic for Linea de Credito */}
                             {isLinea && (
                                 <>
-                                     <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Cupo Total Autorizado</label>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
-                                                <CurrencyInput
-                                                    disabled={readOnly}
-                                                    value={item.limit}
-                                                    onChange={(val) => onUpdate('limit', val)}
-                                                    className="w-full bg-white border border-gray-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 outline-none"
-                                                    placeholder="0"
-                                                />
+                                                <CurrencyInput disabled={readOnly} value={item.limit} onChange={(val) => onUpdate('limit', val)} className="w-full bg-white border border-gray-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 outline-none" placeholder="0" />
                                             </div>
                                         </div>
                                         <div>
                                             <label className="text-[9px] text-rose-600/70 font-bold uppercase block mb-1">Deuda Total (Uso)</label>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-rose-400 text-[10px]">$</span>
-                                                <CurrencyInput
-                                                    disabled={readOnly}
-                                                    value={item.totalDebt}
-                                                    onChange={(val) => onUpdate('totalDebt', val)}
-                                                    className="w-full bg-white border border-rose-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-rose-700 focus:border-rose-500 outline-none shadow-sm"
-                                                    placeholder="0"
-                                                />
+                                                <CurrencyInput disabled={readOnly} value={item.totalDebt} onChange={(val) => onUpdate('totalDebt', val)} className="w-full bg-white border border-rose-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-rose-700 focus:border-rose-500 outline-none shadow-sm" placeholder="0" />
                                             </div>
                                         </div>
                                     </div>
@@ -468,21 +529,14 @@
                                         <div>
                                             <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Disponible Real</label>
                                             <div className="w-full bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-500 flex items-center gap-1">
-                                                <span className="text-[10px]">$</span>
-                                                {formatCurrency(available).replace('$','')}
+                                                <span className="text-[10px]">$</span>{formatCurrency(available).replace('$','')}
                                             </div>
                                         </div>
                                         <div>
                                             <label className="text-[9px] text-emerald-600/70 font-bold uppercase block mb-1">Abonado a la Línea</label>
                                             <div className="relative">
                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-emerald-400 text-[10px]">$</span>
-                                                <CurrencyInput
-                                                    disabled={readOnly}
-                                                    value={item.payedAmount}
-                                                    onChange={(val) => onUpdate('payedAmount', val)}
-                                                    className="w-full bg-white border border-emerald-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-emerald-700 focus:border-emerald-500 outline-none shadow-sm"
-                                                    placeholder="0"
-                                                />
+                                                <CurrencyInput disabled={readOnly} value={item.payedAmount} onChange={(val) => onUpdate('payedAmount', val)} className="w-full bg-white border border-emerald-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-emerald-700 focus:border-emerald-500 outline-none shadow-sm" placeholder="0" />
                                             </div>
                                         </div>
                                     </div>
@@ -509,10 +563,14 @@
             );
         };
 
-        const SettingsModal = ({ isOpen, onClose, url, onSave, currentData, onImport }) => {
+        const SettingsModal = ({ isOpen, onClose, url, onSave, currentData, onImport, onUpdateUser, userSettings, onLogout }) => {
             const [tempUrl, setTempUrl] = useState(url);
+            const [tempName, setTempName] = useState(userSettings?.name || '');
             
-            useEffect(() => { setTempUrl(url); }, [url, isOpen]);
+            useEffect(() => { 
+                setTempUrl(url); 
+                setTempName(userSettings?.name || ''); 
+            }, [url, isOpen, userSettings]);
 
             if (!isOpen) return null;
 
@@ -526,27 +584,57 @@
                 downloadAnchorNode.remove();
             };
 
+            const handleUserUpdate = (key, val) => { 
+                onUpdateUser(key, val); 
+                if(key === 'name') setTempName(val); 
+            };
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <h3 className="font-bold text-gray-800 flex items-center gap-2"><Settings size={18}/> Configuración</h3>
                             <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-gray-600"/></button>
                         </div>
                         <div className="p-4 space-y-6">
-                            {/* Google Sheet Sync */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><UserCircle size={12}/> Personalización</h4>
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-500 font-bold">Tu Nombre</label>
+                                    <input 
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-indigo-500" 
+                                        placeholder="Ej. Juan Pérez" 
+                                        value={tempName} 
+                                        onChange={(e) => handleUserUpdate('name', e.target.value)} 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-500 font-bold flex items-center gap-1"><Palette size={12}/> Color Principal</label>
+                                    <div className="grid grid-cols-6 gap-2">
+                                        {Object.entries(THEMES).map(([key, theme]) => (
+                                            <button 
+                                                key={key} 
+                                                onClick={() => handleUserUpdate('theme', key)} 
+                                                className={`w-8 h-8 rounded-full ${theme.bg} transition-transform active:scale-90 flex items-center justify-center ring-offset-1 ${userSettings?.theme === key ? 'ring-2 ring-gray-400 scale-110' : ''}`} 
+                                                title={theme.name}
+                                            >
+                                                {userSettings?.theme === key && <Check size={14} className="text-white"/>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="h-px bg-gray-100"></div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Cloud size={12}/> Google Apps Script URL</label>
                                 <input 
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500"
-                                    placeholder="https://script.google.com/..."
-                                    value={tempUrl}
-                                    onChange={(e) => setTempUrl(e.target.value)}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500" 
+                                    placeholder="https://script.google.com/..." 
+                                    value={tempUrl} 
+                                    onChange={(e) => setTempUrl(e.target.value)} 
                                 />
                                 <button onClick={() => { onSave(tempUrl); onClose(); }} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700">Guardar URL</button>
                             </div>
-
-                            {/* Data Management */}
                             <div className="space-y-3 pt-4 border-t border-gray-100">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase">Gestión de Datos</h4>
                                 <div className="grid grid-cols-2 gap-2">
@@ -555,27 +643,32 @@
                                     </button>
                                     <label className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 border border-blue-100 cursor-pointer">
                                         <Upload size={14}/> Importar JSON
-                                        <input type="file" className="hidden" accept=".json" onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if(!file) return;
-                                            const reader = new FileReader();
-                                            reader.onload = (ev) => {
-                                                try {
-                                                    const parsed = JSON.parse(ev.target.result);
-                                                    if(window.confirm('¿Restaurar respaldo? Se perderán los cambios actuales.')) {
-                                                        onImport(parsed);
-                                                        onClose();
-                                                    }
-                                                } catch(ex) { alert('Archivo inválido'); }
-                                            };
-                                            reader.readAsText(file);
+                                        <input type="file" className="hidden" accept=".json" onChange={(e) => { 
+                                            const file = e.target.files[0]; 
+                                            if(!file) return; 
+                                            const reader = new FileReader(); 
+                                            reader.onload = (ev) => { 
+                                                try { 
+                                                    const parsed = JSON.parse(ev.target.result); 
+                                                    if(window.confirm('¿Restaurar respaldo? Se perderán los cambios actuales.')) { 
+                                                        onImport(parsed); 
+                                                        onClose(); 
+                                                    } 
+                                                } catch(ex) { alert('Archivo inválido'); } 
+                                            }; 
+                                            reader.readAsText(file); 
                                         }}/>
                                     </label>
                                 </div>
                             </div>
                             
+                            {/* Cerrar Sesión */}
+                            <button onClick={() => { if(window.confirm('¿Cerrar sesión?')) { onLogout(); onClose(); }}} className="w-full py-2 text-red-500 text-xs font-bold flex items-center justify-center gap-2 border border-red-100 rounded-lg hover:bg-red-50">
+                                <Logout size={14}/> Cerrar Sesión
+                            </button>
+                            
                             <div className="pt-2 text-center">
-                                <p className="text-[10px] text-gray-400">Versión 2.5.0 (Offline-First)</p>
+                                <p className="text-[10px] text-gray-400">Versión 2.8.0 (Ready)</p>
                             </div>
                         </div>
                     </div>
@@ -584,7 +677,20 @@
         };
 
         // --- INICIALIZACIÓN ---
-        const INITIAL_DATA = { isClosed: false, income: 0, extraIncome: 0, supermarket: { budget: 0, items: [], lists: [] }, hogar: [{ id: 'h1', name: 'Arriendo', amount: 0, paid: false }, { id: 'h2', name: 'Gasto Común', amount: 0, paid: false }, { id: 'h3', name: 'Entel Móvil', amount: 0, paid: false }, { id: 'h4', name: 'Entel Hogar', amount: 0, paid: false }, { id: 'h5', name: 'Agua', amount: 0, paid: false }, { id: 'h6', name: 'Luz Enel', amount: 0, paid: false }, { id: 'h7', name: 'Gasolina', amount: 0, paid: false }, { id: 'h8', name: 'Tag', amount: 0, paid: false }, { id: 'h9', name: 'HDI Seguros', amount: 0, paid: false }, { id: 'h10', name: 'Crédito Consumo Auto', amount: 0, paid: false }, { id: 'h11', name: 'Mascotas', amount: 0, paid: false }], subscriptions: [{ id: 's1', name: 'Netflix', amount: 0, paid: false }, { id: 's2', name: 'Spotify', amount: 0, paid: false }, { id: 's3', name: 'Disney', amount: 0, paid: false }, { id: 's4', name: 'MAX', amount: 0, paid: false }, { id: 's5', name: 'Adobe Suite', amount: 0, paid: false }, { id: 's6', name: 'Youtube Jose', amount: 0, paid: false }, { id: 's7', name: 'Apple TV', amount: 0, paid: false }, { id: 's8', name: 'Youtube Papa', amount: 0, paid: false }, { id: 's9', name: 'Cuota Muebles Terraza', amount: 0, paid: false }, { id: 's10', name: 'ChatGPT', amount: 0, paid: false }, { id: 's11', name: 'Google One', amount: 0, paid: false }], creditCards: [], customModules: [{ id: 'default-chillan', name: 'Gastos Chillán', items: [{ id: 'ch1', name: 'Gas', amount: 0, paid: false }, { id: 'ch2', name: 'Movistar', amount: 0, paid: false }, { id: 'ch3', name: 'Agua', amount: 0, paid: false }, { id: 'ch4', name: 'Luz', amount: 0, paid: false }] }], savings: [{ id: 'sav1', name: 'Fondo de Emergencia', amount: 0, paid: false }], loansGiven: [], streetFood: [] };
+        const INITIAL_DATA = { 
+            isClosed: false, 
+            userSettings: { name: '', theme: 'indigo', appMode: null }, // CAMBIO: name vacío por defecto
+            income: 0, 
+            extraIncome: 0, 
+            supermarket: { budget: 0, items: [], lists: [] }, 
+            hogar: [], 
+            subscriptions: [], 
+            creditCards: [], 
+            customModules: [], 
+            savings: [], 
+            loansGiven: [], 
+            streetFood: [] 
+        };
 
         const App = () => {
             const today = new Date();
@@ -597,7 +703,10 @@
             const [syncStatus, setSyncStatus] = useState('idle');
             const [showSettings, setShowSettings] = useState(false);
             
-            // Estado para manejar la Lista Activa de Supermercado
+            // Estado de Autenticación (Simulado)
+            const [auth, setAuth] = useState({ isAuthenticated: false, user: null });
+            
+            // Listas
             const [activeListId, setActiveListId] = useState(null);
             const [newProduct, setNewProduct] = useState({ name: '', price: '' });
 
@@ -617,23 +726,80 @@
 
             const getStorageKey = (m, y) => `finance-v18-${y}-${m}`;
 
-            // Handlers definidos ANTES de ser usados
+            // LOGIN HANDLERS
+            const handleLogin = (user) => {
+                const session = { isAuthenticated: true, user };
+                setAuth(session);
+                localStorage.setItem('finance_user_session', JSON.stringify(session));
+            };
+
+            const handleNameSubmit = (name) => {
+                if(!name.trim()) return;
+                const newData = { 
+                    ...data, 
+                    userSettings: { ...data.userSettings, name: name }
+                };
+                setData(newData);
+                const key = getStorageKey(viewDate.month, viewDate.year);
+                localStorage.setItem(key, JSON.stringify(newData));
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('finance_user_session');
+                setAuth({ isAuthenticated: false, user: null });
+                window.location.reload();
+            };
+
+            const handleModeSelect = (mode) => {
+                const newData = { 
+                    ...data, 
+                    userSettings: { ...data.userSettings, appMode: mode }
+                };
+                setData(newData);
+                const key = getStorageKey(viewDate.month, viewDate.year);
+                localStorage.setItem(key, JSON.stringify(newData));
+            };
+
+            // DYNAMIC WORDING
+            const getLabels = () => {
+                const mode = data.userSettings?.appMode || 'personal';
+                return mode === 'business' ? {
+                    hogarTitle: 'Mi Negocio',
+                    hogarIcon: Store,
+                    superTitle: 'Compras / Insumos',
+                    hogarItemsDef: 'Gastos Operativos (Arriendo, Luz, Agua)',
+                    listTitle: 'Listas de Compras'
+                } : {
+                    hogarTitle: 'Hogar',
+                    hogarIcon: Home,
+                    superTitle: 'Supermercado',
+                    hogarItemsDef: 'Gastos del Hogar',
+                    listTitle: 'Listas de Mercado'
+                };
+            };
+            const LABELS = getLabels();
+
+            // Theme Helper
+            const currentTheme = THEMES[data.userSettings?.theme] || THEMES.indigo;
+
+            // Handlers
             const toggleMonthStatus = () => { 
-                if(window.confirm(`¿Estás seguro de ${data.isClosed ? "abrir" : "cerrar"} el mes?`)) {
+                if(window.confirm(`¿Estás seguro de ${data.isClosed ? "abrir" : "cerrar"} el mes?`)) 
                     setData({ ...data, isClosed: !data.isClosed }); 
-                }
             };
 
             const resetMonth = () => { 
                 if (data.isClosed) return; 
                 if(!window.confirm("¿Reiniciar valores?")) return; 
+                
                 const zeroList = (list) => list.map(i => ({...i, amount: 0, paid: false})); 
                 const zeroCards = (list) => list.map(i => ({...i, monthlyQuota: 0, payedAmount: 0, status: 'pending'})); 
                 const zeroModules = (modules) => modules.map(m => ({ ...m, items: m.items.map(i => ({...i, amount: 0, paid: false})) })); 
+                
                 setData({ 
                     ...data, 
-                    income: data.income,
-                    extraIncome: 0,
+                    income: data.income, 
+                    extraIncome: 0, 
                     supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] }, 
                     hogar: zeroList(data.hogar), 
                     subscriptions: zeroList(data.subscriptions), 
@@ -644,8 +810,9 @@
                     streetFood: [] 
                 }); 
             };
-            
+
             const updateList = (k, fn) => !data.isClosed && setData({...data, [k]: fn(data[k] || [])});
+            
             const addBank = () => { 
                 if (!newBankName.trim()) return; 
                 const ts = Date.now(); 
@@ -658,8 +825,17 @@
                 setIsAddingBank(false); 
             };
 
-            // Efectos
+            const updateUser = (key, val) => { setData(prev => ({ ...prev, userSettings: { ...prev.userSettings, [key]: val } })); };
+
+            // Effects
             useEffect(() => {
+                // 1. Check Auth
+                const sessionStr = localStorage.getItem('finance_user_session');
+                if(sessionStr) {
+                    try { setAuth(JSON.parse(sessionStr)); } catch(e) {}
+                }
+
+                // 2. Load Data
                 const savedUrl = localStorage.getItem('google_sheet_script_url');
                 if(savedUrl) setSheetUrl(savedUrl);
                 const key = getStorageKey(viewDate.month, viewDate.year);
@@ -667,150 +843,130 @@
                 if(savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
-                        setData({ ...INITIAL_DATA, ...parsed }); 
+                        setData({ ...INITIAL_DATA, ...parsed, userSettings: parsed.userSettings || INITIAL_DATA.userSettings }); 
                     } catch(e) { setData(INITIAL_DATA); }
                 } else {
-                    if(data.creditCards.length > 0) {
-                        const template = { 
-                            ...INITIAL_DATA, 
-                            creditCards: data.creditCards.map(c => ({
-                                ...c, 
-                                monthlyQuota: 0, 
-                                payedAmount: 0, 
-                                status: 'pending'
-                            })) 
-                        };
-                        setData(template);
-                    } else {
-                        setData(INITIAL_DATA);
-                    }
+                    // CAMBIO 2: Lógica de Persistencia al cambiar de mes
+                    const resetItem = (item) => ({ ...item, amount: 0, paid: false });
+                    const template = { 
+                        ...INITIAL_DATA, 
+                        userSettings: data.userSettings, 
+                        income: data.income, 
+                        hogar: (data.hogar || []).map(resetItem),
+                        subscriptions: (data.subscriptions || []).map(resetItem),
+                        customModules: (data.customModules || []).map(m => ({ ...m, items: m.items.map(resetItem) })),
+                        savings: (data.savings || []).map(resetItem),
+                        creditCards: (data.creditCards || []).map(c => ({ ...c, monthlyQuota: 0, payedAmount: 0, status: 'pending' })),
+                        supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] },
+                        streetFood: [],
+                        loansGiven: []
+                    };
+                    setData(template);
                 }
                 setIsLoaded(true);
             }, [viewDate]);
 
             useEffect(() => {
-                if(isLoaded) {
+                if(isLoaded && auth.isAuthenticated) {
                     const key = getStorageKey(viewDate.month, viewDate.year);
                     localStorage.setItem(key, JSON.stringify(data));
                     if(sheetUrl) {
                         setSyncStatus('syncing');
                         if(debounceRef.current) clearTimeout(debounceRef.current);
                         debounceRef.current = setTimeout(async () => {
-                             try {
-                                await fetch(sheetUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: MONTHS[viewDate.month], year: viewDate.year, ...data }) });
-                                setSyncStatus('success'); setTimeout(() => setSyncStatus('idle'), 2000);
+                             try { 
+                                 await fetch(sheetUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: MONTHS[viewDate.month], year: viewDate.year, ...data }) }); 
+                                 setSyncStatus('success'); 
+                                 setTimeout(() => setSyncStatus('idle'), 2000); 
                             } catch(e) { setSyncStatus('error'); }
                         }, 3000);
                     }
                 }
-            }, [data, isLoaded]);
+            }, [data, isLoaded, auth]);
 
-            if (!isLoaded) return null; // Loader handled outside React
+            if (!isLoaded) return null;
 
+            // --- VIEW ROUTING ---
+            if (!auth.isAuthenticated) {
+                return <LoginScreen onLogin={handleLogin} />;
+            }
+
+            if (!data.userSettings?.name) {
+                return <NameSetupScreen onSaveName={handleNameSubmit} />;
+            }
+
+            if (!data.userSettings?.appMode) {
+                return <OnboardingScreen onSelectMode={handleModeSelect} />;
+            }
+
+            // --- MAIN APP LOGIC ---
             const isReadOnly = data.isClosed;
             const calcTotal = (l) => (l || []).reduce((a,b) => a + (Number(b.amount)||0), 0);
             const calcPaid = (l) => (l || []).filter(i => i.paid).reduce((a,b) => a + (Number(b.amount)||0), 0);
 
-            // CÁLCULO GASTO SUPERMERCADO: Historial Simple + Listas (Solo items con check)
             const marketSimpleSpent = calcTotal(data.supermarket?.items);
             const marketListsSpent = (data.supermarket?.lists || []).reduce((acc, list) => {
                 const listTotal = (list.items || []).filter(i => i.checked).reduce((sum, item) => sum + (Number(item.price) || 0), 0);
                 return acc + listTotal;
             }, 0);
-            
             const marketSpent = marketSimpleSpent + marketListsSpent;
 
             const customTotal = (data.customModules||[]).reduce((a,b) => a + calcTotal(b.items), 0);
             const customPaid = (data.customModules||[]).reduce((a,b) => a + calcPaid(b.items), 0);
             
-            // CÁLCULO TARJETAS: TOTAL DEUDA VS TOTAL PAGADO
             const creditCalculation = (data.creditCards||[]).reduce((acc, item) => {
                 if(item.status === 'no_debt') return acc;
                 let fullAmount = 0;
                 let paidAmount = Number(item.payedAmount) || 0;
-
-                if (item.type === 'linea') {
-                    // En Línea de Crédito, el "Gasto" es lo que has usado (totalDebt)
-                    // Si pagas, baja la deuda, pero para efectos de "Gasto del Mes" consideramos el uso total registrado
+                if (item.type === 'linea') { 
                     fullAmount = Number(item.totalDebt) || 0; 
-                } else if (item.type === 'tc_dolares') {
-                    const quota = Number(item.monthlyQuota) || 0;
-                    fullAmount = quota * USD_VALUE;
-                    paidAmount = paidAmount * USD_VALUE; // Asumimos abono también en USD para simplificar o si el usuario pone CLP habría que ajustar. Por ahora asumimos input en misma moneda.
-                } else {
-                    // TC Pesos: El gasto es la Cuota Mensual completa
-                    fullAmount = Number(item.monthlyQuota) || 0;
+                } else if (item.type === 'tc_dolares') { 
+                    const quota = Number(item.monthlyQuota) || 0; 
+                    fullAmount = quota * USD_VALUE; 
+                    paidAmount = paidAmount * USD_VALUE; 
+                } else { 
+                    fullAmount = Number(item.monthlyQuota) || 0; 
                 }
-                
-                return {
-                    total: acc.total + fullAmount,
-                    paid: acc.paid + paidAmount
-                };
+                return { total: acc.total + fullAmount, paid: acc.paid + paidAmount };
             }, { total: 0, paid: 0 });
 
             const totals = {
                 hogar: calcTotal(data.hogar), 
                 hogarPaid: calcPaid(data.hogar),
-
-                subscriptions: calcTotal(data.subscriptions),
+                subscriptions: calcTotal(data.subscriptions), 
                 subscriptionsPaid: calcPaid(data.subscriptions),
-
                 creditCards: creditCalculation.total, 
                 creditCardsPaid: creditCalculation.paid,
-
                 supermarket: marketSpent, 
-                
-                savings: calcTotal(data.savings),
+                savings: calcTotal(data.savings), 
                 savingsPaid: calcPaid(data.savings),
-
                 loansGiven: calcTotal(data.loansGiven), 
                 loansGivenPaid: calcPaid(data.loansGiven),
-                
-                street: calcTotal(data.streetFood),
+                street: calcTotal(data.streetFood), 
                 streetPaid: calcPaid(data.streetFood),
-
                 custom: customTotal
             };
             
-            // CÁLCULO DE PENDIENTES HOGAR (Para el botón de categoría)
-            const hogarPending = (totals.hogar - totals.hogarPaid) + 
-                                 (totals.subscriptions - totals.subscriptionsPaid) + 
-                                 (totals.street - totals.streetPaid) + 
-                                 (customTotal - customPaid);
-            
-            // CÁLCULO TOTAL PENDIENTE POR PAGAR (Hogar + Tarjetas + Supermercado (0) - Préstamos (0))
-            // Se asume Supermercado pagado al día (pendiente 0) y se excluyen Préstamos/Ahorros
+            const hogarPending = (totals.hogar - totals.hogarPaid) + (totals.subscriptions - totals.subscriptionsPaid) + (totals.street - totals.streetPaid) + (customTotal - customPaid);
             const creditPending = Math.max(0, totals.creditCards - totals.creditCardsPaid);
             const totalPendingToPay = hogarPending + creditPending;
-
             const grandTotalExpenses = totals.hogar + totals.subscriptions + totals.street + totals.custom + totals.creditCards + totals.supermarket;
             const totalAhorros = totals.savings + totals.loansGiven;
-            
-            // TOTAL OUTFLOWS: Sumatoria de todo lo que hay que desembolsar en el mes (Deudas Totales + Ahorros Totales)
             const totalOutflows = grandTotalExpenses + totalAhorros;
-
-            // TOTAL PAGADO: Sumatoria de todo lo que ya se pagó
-            // Asumimos Supermercado como pagado al 100% (gasto histórico) para que cuadre en la visualización de "flujo ejecutado"
             const totalPaidOutflows = totals.hogarPaid + totals.subscriptionsPaid + totals.streetPaid + customPaid + totals.creditCardsPaid + totals.savingsPaid + totals.loansGivenPaid + marketSpent;
-
             const totalIncome = (Number(data.income) || 0) + (Number(data.extraIncome) || 0);
-            
-            // --- NUEVOS CÁLCULOS DE SALDO ---
-            // 1. Saldo Proyectado (Budget): Ingresos - Gastos Totales (Planificados)
             const projectedBalance = totalIncome - totalOutflows;
-            
-            // 2. Saldo Actual (Cashflow): Ingresos - Gastos Pagados (Lo que queda en caja HOY)
             const currentCashBalance = totalIncome - totalPaidOutflows;
 
             const expenseDistribution = [
-                { label: 'Hogar', value: totals.hogar + totals.subscriptions + totals.custom + totals.street, color: '#10B981' }, 
-                { label: 'Super', value: totals.supermarket, color: '#6366F1' }, 
+                { label: LABELS.hogarTitle, value: totals.hogar + totals.subscriptions + totals.custom + totals.street, color: '#10B981' }, 
+                { label: LABELS.superTitle, value: totals.supermarket, color: '#6366F1' }, 
                 { label: 'Tarjetas', value: totals.creditCards, color: '#F43F5E' }, 
             ].filter(i => i.value > 0);
 
             const creditCardUsage = (data.creditCards || []).map(card => ({
-                label: card.name,
-                total: card.type === 'linea' ? (Number(card.totalDebt)||0) : (Number(card.monthlyQuota)||0),
+                label: card.name, 
+                total: card.type === 'linea' ? (Number(card.totalDebt)||0) : (Number(card.monthlyQuota)||0), 
                 paid: Number(card.payedAmount) || 0
             })).filter(c => c.total > 0);
 
@@ -821,100 +977,87 @@
             const updateAmount = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, amount: v} : i));
             const updateName = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, name: v} : i));
             const delItem = (k, id) => updateList(k, l => l.filter(i => i.id !== id));
-            const addItem = (k, state, setState) => { if(!state.name || !state.amount || isReadOnly) return; updateList(k, l => [...l, {id: Date.now(), name: state.name, amount: Number(state.amount), paid: false}]); setState({name:'', amount:''}); };
-            const updateCard = (id, field, val) => { if (isReadOnly) return; updateList('creditCards', list => list.map(c => c.id === id ? { ...c, [field]: val } : c)); };
+            const addItem = (k, state, setState) => { 
+                if(!state.name || !state.amount || isReadOnly) return; 
+                updateList(k, l => [...l, {id: Date.now(), name: state.name, amount: Number(state.amount), paid: false}]); 
+                setState({name:'', amount:''}); 
+            };
+            const updateCard = (id, field, val) => { 
+                if (isReadOnly) return; 
+                updateList('creditCards', list => list.map(c => c.id === id ? { ...c, [field]: val } : c)); 
+            };
             
             const uniqueBanks = [...new Set((data.creditCards || []).map(item => item.bank))];
-            
             const marketBudget = Number(data.supermarket?.budget) || 0;
             const marketRatio = marketBudget > 0 ? (marketSpent / marketBudget) : 0;
-            let marketStatusColor = "text-gray-500", marketBarColor = "bg-gray-200", marketBg = "bg-white";
-            if (marketBudget > 0) { if (marketSpent > marketBudget) { marketStatusColor = "text-red-600"; marketBarColor = "bg-red-500"; marketBg = "bg-red-50"; } else if (marketRatio >= 0.8) { marketStatusColor = "text-orange-500"; marketBarColor = "bg-orange-500"; marketBg = "bg-orange-50"; } else { marketStatusColor = "text-green-600"; marketBarColor = "bg-green-500"; marketBg = "bg-green-50"; } }
 
-            // HELPERS PARA LISTAS
-            const handleCreateList = () => {
-                const newList = { id: Date.now(), name: 'Nueva Lista', items: [] };
-                setData({ ...data, supermarket: { ...data.supermarket, lists: [...(data.supermarket.lists || []), newList] } });
-                setActiveListId(newList.id);
+            const handleCreateList = () => { 
+                const newList = { id: Date.now(), name: 'Nueva Lista', items: [] }; 
+                setData({ ...data, supermarket: { ...data.supermarket, lists: [...(data.supermarket.lists || []), newList] } }); 
+                setActiveListId(newList.id); 
             };
-
+            
             const activeList = activeListId ? (data.supermarket?.lists || []).find(l => l.id === activeListId) : null;
             
-            const updateActiveList = (newListData) => {
-                const updatedLists = data.supermarket.lists.map(l => l.id === activeListId ? newListData : l);
-                setData({ ...data, supermarket: { ...data.supermarket, lists: updatedLists } });
+            const updateActiveList = (newListData) => { 
+                const updatedLists = data.supermarket.lists.map(l => l.id === activeListId ? newListData : l); 
+                setData({ ...data, supermarket: { ...data.supermarket, lists: updatedLists } }); 
             };
             
-            // Refactorizado para aceptar una lista específica (desde el row)
             const handleFinishList = (targetList) => {
                 if (!targetList) return;
-
                 const checkedItems = targetList.items.filter(i => i.checked);
-                
-                // Validación estricta: Si no hay items marcados, no se procesa (el botón estará oculto de todas formas en la UI)
                 if (checkedItems.length === 0) return;
-
+                
                 const totalSpent = checkedItems.reduce((acc, i) => acc + (Number(i.price) || 0), 0);
                 const hasMissingPrices = checkedItems.some(i => !i.price || Number(i.price) === 0);
-
-                // Lógica de Confirmación
-                if (hasMissingPrices) {
-                    if (!window.confirm(`Registrarás la compra en "${targetList.name}" con valores inexactos (faltan precios).\n\n¿Estás seguro?`)) {
-                        return;
-                    }
-                } else {
-                     if (!window.confirm(`¿Registrar compra de ${targetList.name} por ${formatCurrency(totalSpent)}?\n\nLa lista se eliminará y pasará al historial.`)) {
-                        return;
-                    }
-                }
-
-                // Ejecutar Acción
-                const newItem = {
-                    id: Date.now(),
-                    name: targetList.name,
-                    amount: totalSpent,
-                    inexact: hasMissingPrices
-                };
                 
+                if (hasMissingPrices) { 
+                    if (!window.confirm(`Registrarás la compra en "${targetList.name}" con valores inexactos (faltan precios).\n\n¿Estás seguro?`)) return; 
+                } else { 
+                    if (!window.confirm(`¿Registrar compra de ${targetList.name} por ${formatCurrency(totalSpent)}?\n\nLa lista se eliminará y pasará al historial.`)) return; 
+                }
+                
+                const newItem = { id: Date.now(), name: targetList.name, amount: totalSpent, inexact: hasMissingPrices };
                 const newLists = data.supermarket.lists.filter(l => l.id !== targetList.id);
                 const newHistory = [...(data.supermarket.items || []), newItem];
                 
-                setData({
-                    ...data,
-                    supermarket: {
-                        ...data.supermarket,
-                        lists: newLists,
-                        items: newHistory
-                    }
-                });
+                setData({ ...data, supermarket: { ...data.supermarket, lists: newLists, items: newHistory } });
             };
-
+            
             const itemsWithoutPrice = activeList ? activeList.items.filter(i => !i.price || Number(i.price) === 0).length : 0;
             const activeListTotal = activeList ? activeList.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0) : 0;
 
             return (
                 <div className="max-w-md mx-auto min-h-screen pb-10">
-                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} url={sheetUrl} onSave={(u) => { setSheetUrl(u); localStorage.setItem('google_sheet_script_url', u); }} currentData={data} onImport={setData} />
-                    <header className={`sticky top-0 z-40 px-4 py-3 text-white shadow-lg transition-colors ${isReadOnly ? 'bg-gray-800' : 'bg-indigo-600'}`}>
+                    <SettingsModal 
+                        isOpen={showSettings} 
+                        onClose={() => setShowSettings(false)} 
+                        url={sheetUrl} 
+                        onSave={(u) => { setSheetUrl(u); localStorage.setItem('google_sheet_script_url', u); }} 
+                        currentData={data} 
+                        onImport={setData}
+                        onUpdateUser={updateUser}
+                        userSettings={data.userSettings}
+                        onLogout={handleLogout}
+                    />
+                    <header className={`sticky top-0 z-40 px-4 py-3 text-white shadow-lg transition-colors ${isReadOnly ? 'bg-gray-800' : currentTheme.bg}`}>
                         <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-2">
-                                {currentView !== 'dashboard' && <button onClick={() => { 
-                                    if(activeListId) { setActiveListId(null); } 
-                                    else { setCurrentView('dashboard'); }
-                                }}><ArrowLeft/></button>}
+                                {currentView !== 'dashboard' && <button onClick={() => { if(activeListId) { setActiveListId(null); } else { setCurrentView('dashboard'); } }}><ArrowLeft/></button>}
                                 <h1 className="font-bold text-lg">
                                     {activeListId ? 'Editar Lista' : 
-                                     currentView === 'dashboard' ? 'Mis Finanzas' : 
+                                     currentView === 'dashboard' ? (data.userSettings?.name ? `Hola, ${data.userSettings.name.split(' ')[0]}` : 'Mis Finanzas') : 
                                      currentView === 'graficos' ? 'Gráficos' : 
-                                     currentView === 'hogar' ? 'Hogar' : 
+                                     currentView === 'hogar' ? LABELS.hogarTitle : 
                                      currentView === 'tarjetas' ? 'Tarjetas' : 
-                                     currentView === 'supermercado' ? 'Supermercado' : 'Ahorro & Préstamos'}
+                                     currentView === 'supermercado' ? LABELS.superTitle : 'Reservas'}
                                 </h1>
                             </div>
                             <div className="flex gap-2">
                                 {sheetUrl && (syncStatus === 'syncing' ? <Loader2 className="animate-spin" size={18}/> : <Cloud size={18}/>)}
                                 <button onClick={() => setShowSettings(true)}><Settings size={18}/></button>
-                                <button onClick={toggleMonthStatus} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition ${isReadOnly ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-indigo-500 text-indigo-100 hover:bg-indigo-400'}`}>{isReadOnly ? <Lock size={12}/> : <Unlock size={12}/>}{isReadOnly ? 'CERRADO' : 'Cerrar'}</button>
+                                <button onClick={toggleMonthStatus} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition bg-white/20 hover:bg-white/30`}>{isReadOnly ? <Lock size={12}/> : <Unlock size={12}/>}{isReadOnly ? 'CERRADO' : 'Cerrar'}</button>
                             </div>
                         </div>
                         {currentView === 'dashboard' && (
@@ -932,9 +1075,7 @@
                         {currentView === 'dashboard' && (
                             <>
                                 <div className={`p-5 rounded-3xl shadow-lg relative overflow-hidden ${isReadOnly ? 'bg-gray-200' : 'bg-white'}`}>
-                                    <div className="absolute top-0 right-0 p-4 opacity-5"><DollarSign size={100}/></div>
-                                    
-                                    {/* SECCIÓN INGRESOS */}
+                                    <div className={`absolute top-0 right-0 p-4 opacity-5 ${currentTheme.text}`}><DollarSign size={100}/></div>
                                     <div className="mb-4 space-y-3">
                                         <div>
                                             <label className="text-xs font-bold text-gray-400 uppercase">Ingresos Totales</label>
@@ -951,155 +1092,67 @@
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* SECCIÓN GASTOS Y AHORROS */}
                                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
                                         <div>
                                             <p className="text-gray-400 font-bold">Presupuesto de Gastos</p>
                                             <p className="text-gray-800 font-bold text-lg leading-tight">{formatCurrency(totalOutflows)}</p>
                                             <div className="flex flex-col gap-0.5 mt-1">
-                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
-                                                    Ejecutado: {formatCurrency(totalPaidOutflows)}
-                                                </p>
-                                                <p className="text-[10px] font-bold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded">
-                                                    Por Pagar: {formatCurrency(totalPendingToPay)}
-                                                </p>
+                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">Ejecutado: {formatCurrency(totalPaidOutflows)}</p>
+                                                <p className="text-[10px] font-bold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded">Por Pagar: {formatCurrency(totalPendingToPay)}</p>
                                             </div>
                                         </div>
                                         <div>
                                             <p className="text-gray-400 font-bold">Reservas</p>
                                             <p className="text-gray-800 font-bold text-lg">{formatCurrency(totalAhorros)}</p>
                                             <div className="flex flex-col gap-0.5 mt-1">
-                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
-                                                    Ahorros: {formatCurrency(totals.savings)}
-                                                </p>
-                                                <p className="text-[10px] font-bold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded">
-                                                    Préstamos: {formatCurrency(totals.loansGiven)}
-                                                </p>
+                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">Ahorros: {formatCurrency(totals.savings)}</p>
+                                                <p className="text-[10px] font-bold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded">Préstamos: {formatCurrency(totals.loansGiven)}</p>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* DISPONIBLES: ACTUAL vs PROYECTADO */}
                                     <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
                                         <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
-                                            <span className="text-[10px] font-bold text-emerald-600/70 uppercase block mb-1 flex items-center gap-1">
-                                                <Wallet size={10}/> Saldo Disponible Hoy
-                                            </span>
-                                            <span className={`text-lg font-bold leading-none ${currentCashBalance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                {formatCurrency(currentCashBalance)}
-                                            </span>
+                                            <span className="text-[10px] font-bold text-emerald-600/70 uppercase block mb-1 flex items-center gap-1"><Wallet size={10}/> Saldo Disponible Hoy</span>
+                                            <span className={`text-lg font-bold leading-none ${currentCashBalance >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(currentCashBalance)}</span>
                                         </div>
                                         <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100 text-right">
-                                            <span className="text-[10px] font-bold text-blue-600/70 uppercase block mb-1">
-                                                Saldo Final Estimado
-                                            </span>
-                                            <span className={`text-lg font-bold leading-none ${projectedBalance >= 0 ? 'text-blue-600' : 'text-red-500'}`}>
-                                                {formatCurrency(projectedBalance)}
-                                            </span>
+                                            <span className="text-[10px] font-bold text-blue-600/70 uppercase block mb-1">Saldo Final Estimado</span>
+                                            <span className={`text-lg font-bold leading-none ${projectedBalance >= 0 ? 'text-blue-600' : 'text-red-500'}`}>{formatCurrency(projectedBalance)}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="grid gap-3">
-                                    <CategoryButton title="Hogar" icon={Home} total={hogarPending} color={{bg:'bg-emerald-100', text:'text-emerald-600'}} onClick={()=>setCurrentView('hogar')} />
+                                    <CategoryButton title={LABELS.hogarTitle} icon={LABELS.hogarIcon} total={hogarPending} color={{bg:'bg-emerald-100', text:'text-emerald-600'}} onClick={()=>setCurrentView('hogar')} />
                                     <CategoryButton title="Tarjetas" icon={CreditCard} total={totals.creditCards} color={{bg:'bg-rose-100', text:'text-rose-600'}} onClick={()=>setCurrentView('tarjetas')} />
-                                    <CategoryButton title="Supermercado" icon={ShoppingCart} total={totals.supermarket} color={{bg:'bg-indigo-100', text:'text-indigo-600'}} onClick={()=>setCurrentView('supermercado')} />
+                                    <CategoryButton title={LABELS.superTitle} icon={ShoppingCart} total={totals.supermarket} color={{bg:'bg-indigo-100', text:'text-indigo-600'}} onClick={()=>setCurrentView('supermercado')} />
                                     <CategoryButton title="Reservas" icon={PiggyBank} total={totalAhorros} color={{bg:'bg-orange-100', text:'text-orange-600'}} onClick={()=>setCurrentView('ahorros')} />
-                                    <CategoryButton 
-                                        title="Gráficos" 
-                                        icon={BarChart3} 
-                                        total={0} 
-                                        showAmount={false} 
-                                        subtitle="Análisis y estadísticas" 
-                                        color={{bg:'bg-blue-100', text:'text-blue-600'}} 
-                                        onClick={()=>setCurrentView('graficos')} 
-                                    />
+                                    <CategoryButton title="Gráficos" icon={BarChart3} total={0} showAmount={false} subtitle="Análisis y estadísticas" color={{bg:'bg-blue-100', text:'text-blue-600'}} onClick={()=>setCurrentView('graficos')} />
                                 </div>
                             </>
                         )}
                         {currentView === 'hogar' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-10">
-                                {/* DASHBOARD VISUAL HOGAR - REDISEÑADO: SIMPLE & AWARENESS */}
                                 {(() => {
-                                    const pendingAmount = (totals.hogar - totals.hogarPaid) + 
-                                                          (totals.subscriptions - totals.subscriptionsPaid) + 
-                                                          (totals.street - totals.streetPaid) + 
-                                                          (customTotal - customPaid);
-                                    
+                                    const pendingAmount = (totals.hogar - totals.hogarPaid) + (totals.subscriptions - totals.subscriptionsPaid) + (totals.street - totals.streetPaid) + (customTotal - customPaid);
                                     const isAllPaid = pendingAmount === 0;
-                                    
-                                    // Configuración de "Awareness" (Conciencia de Estado)
-                                    const theme = isAllPaid 
-                                        ? { 
-                                            // Estado: Tarea Completada (Verde Sutil)
-                                            container: "bg-emerald-50/50 border-emerald-100",
-                                            iconBg: "bg-emerald-100 text-emerald-600",
-                                            label: "text-emerald-700",
-                                            amount: "text-emerald-800",
-                                            statusBadge: "bg-emerald-100 text-emerald-700",
-                                            statusText: "¡Todo Pagado!",
-                                            bar: "bg-emerald-500"
-                                          }
-                                        : { 
-                                            // Estado: Atención Requerida (Blanco con acento Naranja)
-                                            container: "bg-white border-orange-100 shadow-sm",
-                                            iconBg: "bg-orange-50 text-orange-600",
-                                            label: "text-gray-500",
-                                            amount: "text-gray-800",
-                                            statusBadge: "bg-orange-50 text-orange-700 border border-orange-100",
-                                            statusText: "Pagos Pendientes",
-                                            bar: "bg-orange-500"
-                                          };
-
+                                    const theme = isAllPaid ? { container: "bg-emerald-50/50 border-emerald-100", iconBg: "bg-emerald-100 text-emerald-600", label: "text-emerald-700", amount: "text-emerald-800", statusBadge: "bg-emerald-100 text-emerald-700", statusText: "¡Todo Pagado!", bar: "bg-emerald-500" } : { container: "bg-white border-orange-100 shadow-sm", iconBg: "bg-orange-50 text-orange-600", label: "text-gray-500", amount: "text-gray-800", statusBadge: "bg-orange-50 text-orange-700 border border-orange-100", statusText: "Pagos Pendientes", bar: "bg-orange-500" };
                                     return (
                                         <div className={`rounded-[2rem] p-6 border transition-all duration-500 relative overflow-hidden ${theme.container}`}>
-                                            
-                                            {/* Barra lateral de estado (Indicador Visual Rápido) */}
                                             <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.bar}`}></div>
-
                                             <div className="relative z-10 pl-2">
                                                 <div className="flex items-center justify-between mb-6">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`p-2.5 rounded-xl ${theme.iconBg}`}>
-                                                            <LayoutDashboard size={20}/>
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="font-bold text-gray-800 text-sm">Resumen Hogar</h3>
-                                                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{new Date().toLocaleString('es-CL', { month: 'long' })}</p>
-                                                        </div>
+                                                        <div className={`p-2.5 rounded-xl ${theme.iconBg}`}><LayoutDashboard size={20}/></div>
+                                                        <div><h3 className="font-bold text-gray-800 text-sm">{LABELS.hogarTitle}</h3><p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{new Date().toLocaleString('es-CL', { month: 'long' })}</p></div>
                                                     </div>
-                                                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${theme.statusBadge}`}>
-                                                        {isAllPaid ? <CheckCircle2 size={12}/> : <AlertTriangle size={12}/>}
-                                                        {theme.statusText}
-                                                    </div>
+                                                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${theme.statusBadge}`}>{isAllPaid ? <CheckCircle2 size={12}/> : <AlertTriangle size={12}/>}{theme.statusText}</div>
                                                 </div>
-
-                                                <div className="mb-8">
-                                                    <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${theme.label}`}>
-                                                        {isAllPaid ? 'Saldo Restante' : 'Monto por Pagar'}
-                                                    </p>
-                                                    <p className={`text-4xl font-extrabold tracking-tight ${theme.amount}`}>
-                                                        {formatCurrency(pendingAmount)}
-                                                    </p>
-                                                </div>
-
+                                                <div className="mb-8"><p className={`text-xs font-bold uppercase tracking-wider mb-1 ${theme.label}`}>{isAllPaid ? 'Saldo Restante' : 'Monto por Pagar'}</p><p className={`text-4xl font-extrabold tracking-tight ${theme.amount}`}>{formatCurrency(pendingAmount)}</p></div>
                                                 <div className="grid grid-cols-2 gap-3">
-                                                    {[
-                                                        { label: 'Gastos Fijos', icon: Home, val: totals.hogar - totals.hogarPaid },
-                                                        { label: 'Suscripciones', icon: Smartphone, val: totals.subscriptions - totals.subscriptionsPaid },
-                                                        { label: 'Variables', icon: Coffee, val: totals.street - totals.streetPaid },
-                                                        { label: 'Otros', icon: MapPin, val: customTotal - customPaid }
-                                                    ].map((stat, i) => (
+                                                    {[{ label: LABELS.hogarTitle, icon: LABELS.hogarIcon, val: totals.hogar - totals.hogarPaid }, { label: 'Suscripciones', icon: Smartphone, val: totals.subscriptions - totals.subscriptionsPaid }, { label: 'Variables', icon: Coffee, val: totals.street - totals.streetPaid }, { label: 'Otros Módulos', icon: MapPin, val: customTotal - customPaid }].map((stat, i) => (
                                                         <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                                                            <div className={`text-xs p-1.5 rounded-md ${stat.val > 0 ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                                {stat.val === 0 ? <Check size={12}/> : <stat.icon size={12} />}
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[10px] text-gray-400 font-bold uppercase">{stat.label}</span>
-                                                                <span className={`text-xs font-bold ${stat.val > 0 ? 'text-gray-700' : 'text-emerald-600 opacity-60'}`}>
-                                                                    {stat.val === 0 ? 'Pagado' : formatCurrency(stat.val)}
-                                                                </span>
-                                                            </div>
+                                                            <div className={`text-xs p-1.5 rounded-md ${stat.val > 0 ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-600'}`}>{stat.val === 0 ? <Check size={12}/> : <stat.icon size={12} />}</div>
+                                                            <div className="flex flex-col"><span className="text-[10px] text-gray-400 font-bold uppercase">{stat.label}</span><span className={`text-xs font-bold ${stat.val > 0 ? 'text-gray-700' : 'text-emerald-600 opacity-60'}`}>{stat.val === 0 ? 'Pagado' : formatCurrency(stat.val)}</span></div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1107,65 +1160,23 @@
                                         </div>
                                     );
                                 })()}
-
-                                {/* GASTOS FIJOS */}
-                                <SectionCard 
-                                    title="Gastos Fijos" 
-                                    icon={Home} 
-                                    total={totals.hogar} 
-                                    paid={totals.hogarPaid} 
-                                    colorClass="bg-white" 
-                                    headerClass="bg-emerald-50 text-emerald-800" 
-                                    readOnly={isReadOnly}
-                                >
+                                <SectionCard title={LABELS.hogarTitle} icon={LABELS.hogarIcon} total={totals.hogar} paid={totals.hogarPaid} colorClass="bg-white" headerClass="bg-emerald-50 text-emerald-800" readOnly={isReadOnly}>
+                                    {data.hogar.length === 0 && !isReadOnly && <p className="text-xs text-gray-400 italic text-center py-2">Agrega tus gastos fijos aquí</p>}
                                     {data.hogar.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('hogar',i.id)} onAmountChange={(v)=>updateAmount('hogar',i.id,v)} onNameChange={(v)=>updateName('hogar',i.id,v)} showDelete={true} onDelete={()=>delItem('hogar',i.id)}/>)}
                                     {!isReadOnly && <AddItemRow name={newHogarItem.name} amount={newHogarItem.amount} onNameChange={e=>setNewHogarItem({...newHogarItem, name:e.target.value})} onAmountChange={val=>setNewHogarItem({...newHogarItem, amount:val})} onAdd={()=>addItem('hogar', newHogarItem, setNewHogarItem)} />}
                                 </SectionCard>
-
-                                {/* MODULOS CUSTOM */}
                                 {data.customModules.map(mod => (
-                                    <SectionCard 
-                                        key={mod.id} 
-                                        title={mod.name} 
-                                        icon={MapPin} 
-                                        total={calcTotal(mod.items)} 
-                                        paid={calcPaid(mod.items)}
-                                        colorClass="bg-white" 
-                                        headerClass="bg-orange-50 text-orange-800" 
-                                        readOnly={isReadOnly}
-                                        onTitleChange={(val) => updateCustomModuleName(mod.id, val)}
-                                        onDeleteSection={()=>{if(window.confirm('Borrar?')) setData({...data, customModules: data.customModules.filter(m=>m.id!==mod.id)})}}
-                                    >
+                                    <SectionCard key={mod.id} title={mod.name} icon={MapPin} total={calcTotal(mod.items)} paid={calcPaid(mod.items)} colorClass="bg-white" headerClass="bg-orange-50 text-orange-800" readOnly={isReadOnly} onTitleChange={(val) => updateCustomModuleName(mod.id, val)} onDeleteSection={()=>{if(window.confirm('Borrar?')) setData({...data, customModules: data.customModules.filter(m=>m.id!==mod.id)})}}>
                                         {mod.items.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.map(it => it.id === i.id ? {...it, paid: !it.paid} : it)} : m); updateCustomModules(() => newData); }} onAmountChange={(v)=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.map(it => it.id === i.id ? {...it, amount: v} : it)} : m); updateCustomModules(() => newData); }} onNameChange={(v)=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.map(it => it.id === i.id ? {...it, name: v} : it)} : m); updateCustomModules(() => newData); }} showDelete={true} onDelete={()=>{ const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: m.items.filter(it => it.id !== i.id)} : m); updateCustomModules(() => newData); }}/>)}
                                         {!isReadOnly && <AddItemRow name={customModuleInputs[mod.id]?.name || ''} amount={customModuleInputs[mod.id]?.amount || ''} onNameChange={e=>setCustomModuleInputs({...customModuleInputs, [mod.id]: {...customModuleInputs[mod.id], name:e.target.value}})} onAmountChange={val=>setCustomModuleInputs({...customModuleInputs, [mod.id]: {...customModuleInputs[mod.id], amount:val}})} onAdd={()=>{ const input = customModuleInputs[mod.id]; if(!input?.name || !input?.amount) return; const newData = data.customModules.map(m => m.id === mod.id ? {...m, items: [...m.items, {id: Date.now(), name: input.name, amount: Number(input.amount), paid: false}]} : m); updateCustomModules(() => newData); setCustomModuleInputs({...customModuleInputs, [mod.id]: {name:'', amount:''}}); }} />}
                                     </SectionCard>
                                 ))}
                                 {!isReadOnly && <button onClick={() => updateCustomModules(list => [...list, { id: Date.now(), name: 'Nuevo Módulo', items: [] }])} className="w-full mt-4 py-4 border-2 border-dashed border-emerald-200/50 rounded-2xl text-emerald-600 font-bold text-sm hover:bg-emerald-50 hover:border-emerald-200 transition-all flex justify-center gap-2"><Plus size={18} /> Crear Nuevo Módulo de Gastos</button>}
-
-                                {/* SUSCRIPCIONES */}
-                                <SectionCard 
-                                    title="Suscripciones" 
-                                    icon={Smartphone} 
-                                    total={totals.subscriptions} 
-                                    paid={totals.subscriptionsPaid}
-                                    colorClass="bg-white" 
-                                    headerClass="bg-purple-50 text-purple-800" 
-                                    readOnly={isReadOnly}
-                                >
+                                <SectionCard title="Suscripciones" icon={Smartphone} total={totals.subscriptions} paid={totals.subscriptionsPaid} colorClass="bg-white" headerClass="bg-purple-50 text-purple-800" readOnly={isReadOnly}>
                                     {data.subscriptions.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('subscriptions',i.id)} onAmountChange={(v)=>updateAmount('subscriptions',i.id,v)} onNameChange={(v)=>updateName('subscriptions',i.id,v)} showDelete={true} onDelete={()=>delItem('subscriptions',i.id)}/>)}
                                     {!isReadOnly && <AddItemRow placeholder="Netflix, Spotify..." name={newSubscriptionItem.name} amount={newSubscriptionItem.amount} onNameChange={e=>setNewSubscriptionItem({...newSubscriptionItem, name:e.target.value})} onAmountChange={val=>setNewSubscriptionItem({...newSubscriptionItem, amount:val})} onAdd={()=>addItem('subscriptions', newSubscriptionItem, setNewSubscriptionItem)} />}
                                 </SectionCard>
-
-                                {/* GASTOS VARIOS */}
-                                <SectionCard 
-                                    title="Gastos Varios" 
-                                    icon={Coffee} 
-                                    total={totals.street} 
-                                    paid={totals.streetPaid}
-                                    colorClass="bg-white" 
-                                    headerClass="bg-blue-50 text-blue-800" 
-                                    readOnly={isReadOnly}
-                                >
+                                <SectionCard title="Gastos Varios" icon={Coffee} total={totals.street} paid={totals.streetPaid} colorClass="bg-white" headerClass="bg-blue-50 text-blue-800" readOnly={isReadOnly}>
                                     {data.streetFood.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('streetFood',i.id)} onAmountChange={(v)=>updateAmount('streetFood',i.id,v)} onNameChange={(v)=>updateName('streetFood',i.id,v)} showDelete={true} onDelete={()=>delItem('streetFood',i.id)}/>)}
                                     {!isReadOnly && <AddItemRow placeholder="Café, Estacionamiento..." name={newStreetItem.name} amount={newStreetItem.amount} onNameChange={e=>setNewStreetItem({...newStreetItem, name:e.target.value})} onAmountChange={val=>setNewStreetItem({...newStreetItem, amount:val})} onAdd={()=>addItem('streetFood', newStreetItem, setNewStreetItem)} />}
                                 </SectionCard>
@@ -1174,27 +1185,55 @@
                         {currentView === 'tarjetas' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                 <SectionCard title="Gestión de Tarjetas" icon={CreditCard} total={totals.creditCards} headerClass={`text-rose-800 ${isReadOnly ? 'bg-gray-200 text-gray-600' : 'bg-rose-50'}`} readOnly={isReadOnly}>
-                                    {uniqueBanks.map(bank => {
-                                        const bankItems = (data.creditCards || []).filter(item => item.bank === bank);
+                                    {uniqueBanks.map(bank => { 
+                                        const bankItems = (data.creditCards || []).filter(item => item.bank === bank); 
                                         return (
                                             <div key={bank} className="mb-6 last:mb-2 bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden">
-                                                <div className="bg-rose-50/50 px-4 py-2 border-b border-rose-100 flex justify-between items-center"><h4 className="text-xs font-bold text-rose-900 uppercase tracking-widest flex items-center gap-2"><Building2 size={14} className="text-rose-400"/> {bank}</h4>{!isReadOnly && <button onClick={() => { if(window.confirm(`¿Eliminar ${bank}?`)) updateList('creditCards', list => list.filter(c => c.bank !== bank)) }} className="text-rose-300 hover:text-rose-600"><Trash2 size={16} /></button>}</div>
-                                                <div className="px-4 py-3">{bankItems.map(item => (<DetailedCreditCardRow key={item.id} item={item} readOnly={isReadOnly} onUpdate={(field, val) => updateCard(item.id, field, val)} onDelete={() => deleteItem('creditCards', item.id)}/>))}</div>
+                                                <div className="bg-rose-50/50 px-4 py-2 border-b border-rose-100 flex justify-between items-center">
+                                                    <h4 className="text-xs font-bold text-rose-900 uppercase tracking-widest flex items-center gap-2">
+                                                        <Building2 size={14} className="text-rose-400"/> {bank}
+                                                    </h4>
+                                                    {!isReadOnly && (
+                                                        <button onClick={() => { if(window.confirm(`¿Eliminar ${bank}?`)) updateList('creditCards', list => list.filter(c => c.bank !== bank)) }} className="text-rose-300 hover:text-rose-600">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="px-4 py-3">
+                                                    {bankItems.map(item => (
+                                                        <DetailedCreditCardRow key={item.id} item={item} readOnly={isReadOnly} onUpdate={(field, val) => updateCard(item.id, field, val)} onDelete={() => deleteItem('creditCards', item.id)}/>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        )
+                                        ) 
                                     })}
-                                    {!isAddingBank && !isReadOnly ? (<button onClick={() => setIsAddingBank(true)} className="w-full mt-2 py-3 border-2 border-dashed border-rose-200 rounded-xl text-rose-400 font-bold text-sm hover:bg-rose-50 transition flex items-center justify-center gap-2"><Plus size={18} /> Agregar Banco</button>) : isAddingBank && (<div className="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200"><h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Nuevo Banco</h4><input autoFocus className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3 focus:outline-none focus:border-rose-500" placeholder="Nombre (Ej. Scotiabank)" value={newBankName} onChange={(e) => setNewBankName(e.target.value)}/><div className="flex flex-wrap gap-2 mb-4"><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.pesos} onChange={e => setNewBankTypes({...newBankTypes, pesos: e.target.checked})} className="accent-rose-500"/> TC Pesos</label><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.dolares} onChange={e => setNewBankTypes({...newBankTypes, dolares: e.target.checked})} className="accent-rose-500"/> TC Dólares</label><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.linea} onChange={e => setNewBankTypes({...newBankTypes, linea: e.target.checked})} className="accent-rose-500"/> Línea</label></div><div className="flex gap-2"><button onClick={addBank} className="flex-1 bg-rose-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-rose-700">Guardar</button><button onClick={() => setIsAddingBank(false)} className="px-4 text-gray-500 text-sm hover:text-gray-800">Cancelar</button></div></div>)}
+                                    {!isAddingBank && !isReadOnly ? (
+                                        <button onClick={() => setIsAddingBank(true)} className="w-full mt-2 py-3 border-2 border-dashed border-rose-200 rounded-xl text-rose-400 font-bold text-sm hover:bg-rose-50 transition flex items-center justify-center gap-2">
+                                            <Plus size={18} /> Agregar Banco
+                                        </button>
+                                    ) : isAddingBank && (
+                                        <div className="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Nuevo Banco</h4>
+                                            <input autoFocus className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3 focus:outline-none focus:border-rose-500" placeholder="Nombre (Ej. Scotiabank)" value={newBankName} onChange={(e) => setNewBankName(e.target.value)}/>
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                <label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.pesos} onChange={e => setNewBankTypes({...newBankTypes, pesos: e.target.checked})} className="accent-rose-500"/> TC Pesos</label>
+                                                <label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.dolares} onChange={e => setNewBankTypes({...newBankTypes, dolares: e.target.checked})} className="accent-rose-500"/> TC Dólares</label>
+                                                <label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.linea} onChange={e => setNewBankTypes({...newBankTypes, linea: e.target.checked})} className="accent-rose-500"/> Línea</label>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={addBank} className="flex-1 bg-rose-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-rose-700">Guardar</button>
+                                                <button onClick={() => setIsAddingBank(false)} className="px-4 text-gray-500 text-sm hover:text-gray-800">Cancelar</button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </SectionCard>
                             </div>
                         )}
                         {currentView === 'supermercado' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                                
                                 {!activeListId ? (
-                                    /* VISTA PRINCIPAL SUPERMERCADO */
-                                    <SectionCard title="Supermercado" icon={ShoppingCart} total={totals.supermarket} headerClass={`text-gray-700 ${isReadOnly ? 'bg-gray-200' : 'bg-gray-50'}`} readOnly={isReadOnly}>
+                                    <SectionCard title={LABELS.superTitle} icon={ShoppingCart} total={totals.supermarket} headerClass={`text-gray-700 ${isReadOnly ? 'bg-gray-200' : 'bg-gray-50'}`} readOnly={isReadOnly}>
                                         <div className="space-y-6">
-                                            {/* Tarjeta de Presupuesto */}
                                             <div className={`p-5 rounded-2xl border transition-colors duration-300 ${marketBudget > 0 && marketSpent > marketBudget ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
                                                 <div className="flex justify-between items-center mb-2">
                                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
@@ -1208,31 +1247,16 @@
                                                 </div>
                                                 <div className="relative">
                                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">$</span>
-                                                    <CurrencyInput 
-                                                        disabled={isReadOnly} 
-                                                        placeholder="0" 
-                                                        value={data.supermarket?.budget || ''} 
-                                                        onChange={(val) => !isReadOnly && setData({...data, supermarket: {...data.supermarket, budget: val}})} 
-                                                        className="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-2xl font-bold text-gray-800 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm disabled:bg-gray-100"
-                                                    />
+                                                    <CurrencyInput disabled={isReadOnly} placeholder="0" value={data.supermarket?.budget || ''} onChange={(val) => !isReadOnly && setData({...data, supermarket: {...data.supermarket, budget: val}})} className="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-2xl font-bold text-gray-800 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm disabled:bg-gray-100" />
                                                 </div>
-                                                
-                                                {/* Barra de Progreso */}
                                                 {marketBudget > 0 && (
                                                     <div className="mt-5">
                                                         <div className="flex justify-between text-xs mb-2 font-medium">
-                                                            <span className={`${marketSpent > marketBudget ? 'text-red-600' : 'text-gray-600'}`}>
-                                                                Gastado: <span className="font-bold text-lg align-middle">{formatCurrency(marketSpent)}</span>
-                                                            </span>
-                                                            <span className="text-gray-400">
-                                                                Meta: {formatCurrency(marketBudget)}
-                                                            </span>
+                                                            <span className={`${marketSpent > marketBudget ? 'text-red-600' : 'text-gray-600'}`}>Gastado: <span className="font-bold text-lg align-middle">{formatCurrency(marketSpent)}</span></span>
+                                                            <span className="text-gray-400">Meta: {formatCurrency(marketBudget)}</span>
                                                         </div>
                                                         <div className="w-full bg-gray-200/80 rounded-full h-3 overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all duration-500 ${marketSpent > marketBudget ? 'bg-red-500' : marketRatio >= 0.8 ? 'bg-orange-500' : 'bg-emerald-500'}`} 
-                                                                style={{ width: `${Math.min((marketSpent / marketBudget) * 100, 100)}%` }}
-                                                            ></div>
+                                                            <div className={`h-full rounded-full transition-all duration-500 ${marketSpent > marketBudget ? 'bg-red-500' : marketRatio >= 0.8 ? 'bg-orange-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min((marketSpent / marketBudget) * 100, 100)}%` }}></div>
                                                         </div>
                                                         <div className="text-right mt-1">
                                                             <span className="text-xs font-bold text-gray-400">Restante: {formatCurrency(Math.max(0, marketBudget - marketSpent))}</span>
@@ -1240,25 +1264,19 @@
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {/* CAMINO 2: LISTAS DE MERCADO */}
                                             <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100">
                                                 <div className="flex justify-between items-center mb-3">
                                                     <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-2">
-                                                        <List size={14}/> Listas de Mercado
+                                                        <List size={14}/> {LABELS.listTitle}
                                                     </h4>
                                                 </div>
-                                                
                                                 <div className="space-y-2 mb-3">
                                                     {(data.supermarket?.lists || []).length === 0 && <p className="text-xs text-gray-400 italic text-center py-2">No tienes listas activas</p>}
-                                                    {(data.supermarket?.lists || []).map(list => {
-                                                        // CÁLCULO SOLO DE LO MARCADO (CHECKED)
-                                                        const listCheckedTotal = list.items.filter(i => i.checked).reduce((acc, i) => acc + (Number(i.price)||0), 0);
-                                                        const listFullTotal = list.items.reduce((acc, i) => acc + (Number(i.price)||0), 0);
-                                                        
-                                                        const itemsChecked = list.items.filter(i => i.checked).length;
-                                                        const hasMissingPrices = list.items.some(i => !i.price || Number(i.price) === 0);
-                                                        
+                                                    {(data.supermarket?.lists || []).map(list => { 
+                                                        const listCheckedTotal = list.items.filter(i => i.checked).reduce((acc, i) => acc + (Number(i.price)||0), 0); 
+                                                        const listFullTotal = list.items.reduce((acc, i) => acc + (Number(i.price)||0), 0); 
+                                                        const itemsChecked = list.items.filter(i => i.checked).length; 
+                                                        const hasMissingPrices = list.items.some(i => !i.price || Number(i.price) === 0); 
                                                         return (
                                                             <div key={list.id} onClick={() => setActiveListId(list.id)} className={`bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center cursor-pointer transition-all relative group ${hasMissingPrices ? 'border-orange-200 shadow-orange-50' : 'border-indigo-50 hover:border-indigo-300'}`}>
                                                                 <div className="flex items-center gap-3">
@@ -1273,105 +1291,53 @@
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                
                                                                 <div className="flex items-center gap-2">
-                                                                    {/* BOTÓN TERMINAR: Solo visible si hay items marcados */}
                                                                     {!isReadOnly && itemsChecked > 0 && (
-                                                                        <button 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleFinishList(list);
-                                                                            }}
-                                                                            className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm animate-in fade-in zoom-in"
-                                                                            title="Finalizar compra"
-                                                                        >
+                                                                        <button onClick={(e) => { e.stopPropagation(); handleFinishList(list); }} className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm animate-in fade-in zoom-in" title="Finalizar compra">
                                                                             <CheckCircle2 size={18}/>
                                                                         </button>
                                                                     )}
-                                                                    
                                                                     <div className="text-right pl-2 border-l border-gray-100">
-                                                                        {/* TOTAL VISIBLE: SOLO LO MARCADO */}
                                                                         <span className={`block font-bold text-sm ${hasMissingPrices ? 'text-orange-600' : 'text-indigo-600'}`}>{formatCurrency(listCheckedTotal)}</span>
                                                                         <span className="text-[9px] text-gray-400 block">Est. {formatCurrency(listFullTotal)}</span>
-                                                                        
                                                                         {!isReadOnly && (
-                                                                            <button 
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    if(window.confirm("¿Eliminar lista?")) {
-                                                                                        const newLists = data.supermarket.lists.filter(l => l.id !== list.id);
-                                                                                        setData({...data, supermarket: { ...data.supermarket, lists: newLists }});
-                                                                                    }
-                                                                                }}
-                                                                                className="text-[10px] text-red-300 hover:text-red-500 block ml-auto mt-1"
-                                                                            >
+                                                                            <button onClick={(e) => { e.stopPropagation(); if(window.confirm("¿Eliminar lista?")) { const newLists = data.supermarket.lists.filter(l => l.id !== list.id); setData({...data, supermarket: { ...data.supermarket, lists: newLists }}); } }} className="text-[10px] text-red-300 hover:text-red-500 block ml-auto mt-1">
                                                                                 Eliminar
                                                                             </button>
                                                                         )}
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        )
+                                                        ) 
                                                     })}
                                                 </div>
-
                                                 {!isReadOnly && (
                                                     <button onClick={handleCreateList} className="w-full py-3 bg-white border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 font-bold text-sm hover:bg-indigo-50 transition flex items-center justify-center gap-2">
                                                         <Plus size={18} /> Crear Nueva Lista
                                                     </button>
                                                 )}
                                             </div>
-
-                                            {/* CAMINO 1: HISTORIAL SIMPLE */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-3 px-1 pt-2 border-t border-gray-100">
-                                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                                                        <ShoppingCart size={14}/> Compras Rápidas ({data.supermarket?.items?.length || 0})
-                                                    </h4>
+                                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><ShoppingCart size={14}/> Compras Rápidas ({data.supermarket?.items?.length || 0})</h4>
                                                 </div>
-
-                                                {/* Input Nueva Compra Rápida (AHORA PRIMERO) */}
                                                 {!isReadOnly && (
                                                     <div className="mb-4">
                                                         <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200 flex gap-2">
-                                                            <input 
-                                                                className="flex-1 bg-transparent px-4 py-3 text-sm font-medium focus:outline-none placeholder-gray-400 text-gray-800" 
-                                                                placeholder="Nombre local..." 
-                                                                value={newMarketItem.name} 
-                                                                onChange={(e) => setNewMarketItem({...newMarketItem, name: e.target.value})}
-                                                            />
+                                                            <input className="flex-1 bg-transparent px-4 py-3 text-sm font-medium focus:outline-none placeholder-gray-400 text-gray-800" placeholder="Nombre local..." value={newMarketItem.name} onChange={(e) => setNewMarketItem({...newMarketItem, name: e.target.value})} />
                                                             <div className="w-px bg-gray-200 my-2"></div>
                                                             <div className="relative w-28">
                                                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">$</span>
-                                                                <CurrencyInput 
-                                                                    className="w-full bg-transparent pl-6 pr-3 py-3 text-sm font-bold focus:outline-none placeholder-gray-300 text-gray-800" 
-                                                                    placeholder="0" 
-                                                                    value={newMarketItem.amount} 
-                                                                    onChange={(val) => setNewMarketItem({...newMarketItem, amount: val})}
-                                                                />
+                                                                <CurrencyInput className="w-full bg-transparent pl-6 pr-3 py-3 text-sm font-bold focus:outline-none placeholder-gray-300 text-gray-800" placeholder="0" value={newMarketItem.amount} onChange={(val) => setNewMarketItem({...newMarketItem, amount: val})} />
                                                             </div>
-                                                            <button 
-                                                                onClick={() => { 
-                                                                    if (!newMarketItem.amount) return; 
-                                                                    setData({...data, supermarket: {...data.supermarket, items: [...(data.supermarket?.items || []), {id: Date.now(), name: newMarketItem.name || 'Compra', amount: Number(newMarketItem.amount)}]}}); 
-                                                                    setNewMarketItem({ name: '', amount: '' }); 
-                                                                }} 
-                                                                disabled={!newMarketItem.amount} 
-                                                                className="bg-indigo-600 text-white rounded-xl w-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 disabled:bg-gray-300 transition-all shadow-md"
-                                                            >
+                                                            <button onClick={() => { if (!newMarketItem.amount) return; setData({...data, supermarket: {...data.supermarket, items: [...(data.supermarket?.items || []), {id: Date.now(), name: newMarketItem.name || 'Compra', amount: Number(newMarketItem.amount)}]}}); setNewMarketItem({ name: '', amount: '' }); }} disabled={!newMarketItem.amount} className="bg-indigo-600 text-white rounded-xl w-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 disabled:bg-gray-300 transition-all shadow-md">
                                                                 <Plus size={20} />
                                                             </button>
                                                         </div>
                                                     </div>
                                                 )}
-                                                
-                                                {/* Historial de Compras */}
                                                 <div className="space-y-2.5">
-                                                    {(data.supermarket?.items || []).length === 0 && (
-                                                        <div className="text-center py-4 text-gray-400 text-xs italic">
-                                                            Sin compras rápidas registradas
-                                                        </div>
-                                                    )}
+                                                    {(data.supermarket?.items || []).length === 0 && (<div className="text-center py-4 text-gray-400 text-xs italic">Sin compras rápidas registradas</div>)}
                                                     {(data.supermarket?.items || []).map(item => (
                                                         <div key={item.id} className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-sm">
                                                             <div className="flex items-center gap-3">
@@ -1384,14 +1350,9 @@
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                <span className={`text-sm font-bold px-2 py-1 rounded-lg border ${item.inexact ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-gray-900 bg-gray-50 border-gray-100'}`}>
-                                                                    {formatCurrency(item.amount)}
-                                                                </span>
+                                                                <span className={`text-sm font-bold px-2 py-1 rounded-lg border ${item.inexact ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-gray-900 bg-gray-50 border-gray-100'}`}>{formatCurrency(item.amount)}</span>
                                                                 {!isReadOnly && (
-                                                                    <button 
-                                                                        onClick={() => setData({...data, supermarket: {...data.supermarket, items: data.supermarket.items.filter(i => i.id !== item.id)}})} 
-                                                                        className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
-                                                                    >
+                                                                    <button onClick={() => setData({...data, supermarket: {...data.supermarket, items: data.supermarket.items.filter(i => i.id !== item.id)}})} className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all">
                                                                         <Trash2 size={16} />
                                                                     </button>
                                                                 )}
@@ -1403,161 +1364,58 @@
                                         </div>
                                     </SectionCard>
                                 ) : (
-                                    /* VISTA DETALLE LISTA (INTERNA) */
                                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
-                                        {/* Header Lista */}
                                         <div className="bg-indigo-600 p-4 pb-8">
-                                            <label className="text-xs text-indigo-200 font-bold uppercase mb-1 block">Nombre Supermercado</label>
-                                            <input 
-                                                value={activeList.name} 
-                                                disabled={isReadOnly}
-                                                onChange={(e) => updateActiveList({ ...activeList, name: e.target.value })}
-                                                className="w-full bg-transparent text-2xl font-bold text-white placeholder-indigo-300 focus:outline-none border-b border-indigo-400/50 pb-1"
-                                                placeholder="Ej. Lider, Jumbo..."
-                                            />
+                                            <label className="text-xs text-indigo-200 font-bold uppercase mb-1 block">Nombre Lista</label>
+                                            <input value={activeList.name} disabled={isReadOnly} onChange={(e) => updateActiveList({ ...activeList, name: e.target.value })} className="w-full bg-transparent text-2xl font-bold text-white placeholder-indigo-300 focus:outline-none border-b border-indigo-400/50 pb-1" placeholder="Ej. Semanal..." />
                                         </div>
-
-                                        {/* Cuerpo Lista */}
                                         <div className="flex-1 p-4 -mt-4 bg-white rounded-t-3xl flex flex-col">
-                                            
-                                            {/* Resumen Alertas */}
                                             {itemsWithoutPrice > 0 && (
                                                 <div className="mb-4 bg-orange-50 border border-orange-100 p-3 rounded-xl flex items-start gap-3">
                                                     <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18}/>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-orange-700">Total posiblemente inexacto</p>
-                                                        <p className="text-xs text-orange-600">Hay {itemsWithoutPrice} productos sin precio asignado.</p>
-                                                    </div>
+                                                    <div><p className="text-sm font-bold text-orange-700">Total posiblemente inexacto</p><p className="text-xs text-orange-600">Hay {itemsWithoutPrice} productos sin precio asignado.</p></div>
                                                 </div>
                                             )}
-
-                                            {/* Input Nuevo Producto */}
                                             {!isReadOnly && (
                                                 <div className="flex gap-2 mb-4">
-                                                    <input 
-                                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-                                                        placeholder="Agregar producto..."
-                                                        value={newProduct.name}
-                                                        onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter' && newProduct.name.trim()) {
-                                                                updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] });
-                                                                setNewProduct({ name: '', price: '' });
-                                                            }
-                                                        }}
-                                                    />
+                                                    <input className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors" placeholder="Agregar producto..." value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} onKeyDown={(e) => { if (e.key === 'Enter' && newProduct.name.trim()) { updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] }); setNewProduct({ name: '', price: '' }); } }} />
                                                     <div className="relative w-28 shrink-0">
                                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">$</span>
-                                                        <CurrencyInput 
-                                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-6 pr-3 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-                                                            placeholder="0"
-                                                            value={newProduct.price}
-                                                            onChange={(val) => setNewProduct({...newProduct, price: val})}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter' && newProduct.name.trim()) {
-                                                                    updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] });
-                                                                    setNewProduct({ name: '', price: '' });
-                                                                }
-                                                            }}
-                                                        />
+                                                        <CurrencyInput className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-6 pr-3 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors" placeholder="0" value={newProduct.price} onChange={(val) => setNewProduct({...newProduct, price: val})} onKeyDown={(e) => { if (e.key === 'Enter' && newProduct.name.trim()) { updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] }); setNewProduct({ name: '', price: '' }); } }} />
                                                     </div>
-                                                    <button 
-                                                        onClick={() => {
-                                                            if (!newProduct.name.trim()) return;
-                                                            updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] });
-                                                            setNewProduct({ name: '', price: '' });
-                                                        }}
-                                                        disabled={!newProduct.name.trim()}
-                                                        className="bg-indigo-600 text-white rounded-xl w-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
-                                                    >
+                                                    <button onClick={() => { if (!newProduct.name.trim()) return; updateActiveList({ ...activeList, items: [...activeList.items, { id: Date.now(), name: newProduct.name, price: newProduct.price, checked: false }] }); setNewProduct({ name: '', price: '' }); }} disabled={!newProduct.name.trim()} className="bg-indigo-600 text-white rounded-xl w-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm">
                                                         <Plus size={20}/>
                                                     </button>
                                                 </div>
                                             )}
-
-                                            {/* Lista de Items */}
                                             <div className="space-y-2 flex-1 overflow-y-auto">
-                                                {activeList.items.length === 0 && (
-                                                    <div className="text-center py-10 text-gray-400 text-sm">
-                                                        Tu lista está vacía.<br/>Agrega productos arriba ☝️
-                                                    </div>
-                                                )}
+                                                {activeList.items.length === 0 && (<div className="text-center py-10 text-gray-400 text-sm">Tu lista está vacía.<br/>Agrega productos arriba ☝️</div>)}
                                                 {activeList.items.map(item => (
                                                     <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.checked ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-gray-100'}`}>
-                                                        {/* Checkbox */}
-                                                        <button 
-                                                            disabled={isReadOnly}
-                                                            onClick={() => {
-                                                                const newItems = activeList.items.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i);
-                                                                updateActiveList({ ...activeList, items: newItems });
-                                                            }}
-                                                            className={`shrink-0 transition-colors ${item.checked ? 'text-indigo-600' : 'text-gray-300 hover:text-gray-400'}`}
-                                                        >
+                                                        <button disabled={isReadOnly} onClick={() => { const newItems = activeList.items.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i); updateActiveList({ ...activeList, items: newItems }); }} className={`shrink-0 transition-colors ${item.checked ? 'text-indigo-600' : 'text-gray-300 hover:text-gray-400'}`}>
                                                             {item.checked ? <CheckCircle2 size={24} className="fill-indigo-100"/> : <Circle size={24}/>}
                                                         </button>
-
-                                                        {/* Nombre */}
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className={`text-sm font-medium truncate ${item.checked ? 'text-indigo-800 line-through decoration-indigo-300' : 'text-gray-800'}`}>{item.name}</p>
-                                                        </div>
-
-                                                        {/* Precio Editable */}
+                                                        <div className="flex-1 min-w-0"><p className={`text-sm font-medium truncate ${item.checked ? 'text-indigo-800 line-through decoration-indigo-300' : 'text-gray-800'}`}>{item.name}</p></div>
                                                         <div className="relative w-24 shrink-0">
-                                                            {(!item.price || item.price == 0) && (
-                                                                <span className="absolute -left-5 top-1/2 -translate-y-1/2 text-orange-400" title="Sin precio"><AlertTriangle size={14}/></span>
-                                                            )}
+                                                            {(!item.price || item.price == 0) && (<span className="absolute -left-5 top-1/2 -translate-y-1/2 text-orange-400" title="Sin precio"><AlertTriangle size={14}/></span>)}
                                                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
-                                                            <CurrencyInput 
-                                                                disabled={isReadOnly}
-                                                                value={item.price}
-                                                                onChange={(val) => {
-                                                                    const newItems = activeList.items.map(i => i.id === item.id ? { ...i, price: val } : i);
-                                                                    updateActiveList({ ...activeList, items: newItems });
-                                                                }}
-                                                                className={`w-full bg-transparent border-b border-dashed text-right pr-1 py-1 text-sm font-bold focus:outline-none focus:border-indigo-500 ${item.price > 0 ? (item.checked ? 'text-indigo-600 border-indigo-200' : 'text-gray-800 border-gray-300') : 'text-gray-400 border-orange-300'}`}
-                                                                placeholder="0"
-                                                            />
+                                                            <CurrencyInput disabled={isReadOnly} value={item.price} onChange={(val) => { const newItems = activeList.items.map(i => i.id === item.id ? { ...i, price: val } : i); updateActiveList({ ...activeList, items: newItems }); }} className={`w-full bg-transparent border-b border-dashed text-right pr-1 py-1 text-sm font-bold focus:outline-none focus:border-indigo-500 ${item.price > 0 ? (item.checked ? 'text-indigo-600 border-indigo-200' : 'text-gray-800 border-gray-300') : 'text-gray-400 border-orange-300'}`} placeholder="0" />
                                                         </div>
-
-                                                        {/* Borrar */}
                                                         {!isReadOnly && (
-                                                            <button 
-                                                                onClick={() => {
-                                                                    const newItems = activeList.items.filter(i => i.id !== item.id);
-                                                                    updateActiveList({ ...activeList, items: newItems });
-                                                                }}
-                                                                className="text-gray-300 hover:text-red-500 p-1"
-                                                            >
+                                                            <button onClick={() => { const newItems = activeList.items.filter(i => i.id !== item.id); updateActiveList({ ...activeList, items: newItems }); }} className="text-gray-300 hover:text-red-500 p-1">
                                                                 <Trash2 size={16}/>
                                                             </button>
                                                         )}
                                                     </div>
                                                 ))}
                                             </div>
-
-                                            {/* Footer Totales */}
                                             <div className="mt-4 pt-4 border-t border-gray-100">
-                                                <div className="flex justify-between items-center text-sm mb-1">
-                                                    <span className="text-gray-400">Estimado Lista (Todos)</span>
-                                                    <span className="font-bold text-gray-400">{formatCurrency(activeListTotal)}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-xl font-bold">
-                                                    <span className="text-gray-800">Total Carrito</span>
-                                                    <span className="text-indigo-600">{formatCurrency(activeList.items.filter(i => i.checked).reduce((a,b)=>a+(Number(b.price)||0),0))}</span>
-                                                </div>
+                                                <div className="flex justify-between items-center text-sm mb-1"><span className="text-gray-400">Estimado Lista (Todos)</span><span className="font-bold text-gray-400">{formatCurrency(activeListTotal)}</span></div>
+                                                <div className="flex justify-between items-center text-xl font-bold"><span className="text-gray-800">Total Carrito</span><span className="text-indigo-600">{formatCurrency(activeList.items.filter(i => i.checked).reduce((a,b)=>a+(Number(b.price)||0),0))}</span></div>
                                             </div>
-                                            
                                             {!isReadOnly && (
                                                 <div className="mt-6 space-y-3">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => { if(window.confirm("¿Eliminar lista completa?")) { 
-                                                            const newLists = data.supermarket.lists.filter(l => l.id !== activeListId);
-                                                            setData({...data, supermarket: { ...data.supermarket, lists: newLists }});
-                                                            setActiveListId(null);
-                                                        }}}
-                                                        className="w-full py-3 text-red-400 text-xs font-bold hover:text-red-600 flex items-center justify-center gap-2"
-                                                    >
+                                                    <button type="button" onClick={() => { if(window.confirm("¿Eliminar lista completa?")) { const newLists = data.supermarket.lists.filter(l => l.id !== activeListId); setData({...data, supermarket: { ...data.supermarket, lists: newLists }}); setActiveListId(null); }}} className="w-full py-3 text-red-400 text-xs font-bold hover:text-red-600 flex items-center justify-center gap-2">
                                                         <Trash2 size={14}/> Eliminar esta lista sin guardar
                                                     </button>
                                                 </div>
@@ -1569,15 +1427,40 @@
                         )}
                         {currentView === 'graficos' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                                <div className="flex bg-gray-200 p-1 rounded-xl gap-1">{[{id: 'general', label: 'Resumen'}, {id: 'tarjetas', label: 'Tarjetas'}, {id: 'ahorro', label: 'Ahorro'}].map(t => (<button key={t.id} onClick={() => setChartTab(t.id)} className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${chartTab === t.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t.label}</button>))}</div>
-                                {chartTab === 'general' && <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><PieChart size={20} className="text-indigo-500"/> Distribución de Gastos</h3><SimplePieChart data={expenseDistribution} /></div>}
-                                {chartTab === 'tarjetas' && <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><CreditCard size={20} className="text-rose-500"/> Deuda vs Pagos</h3>{creditCardUsage.length === 0 ? <p className="text-sm text-gray-400 italic text-center py-4">No hay tarjetas registradas.</p> : creditCardUsage.map((c, i) => <ProgressBar key={i} label={c.label} value={c.paid} total={c.total} colorClass="bg-rose-500" />)}</div>}
-                                {chartTab === 'ahorro' && <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><PiggyBank size={20} className="text-emerald-500"/> Capacidad de Ahorro</h3><ProgressBar label="Ahorro vs Ingreso" value={totalAhorros} total={totalIncome} colorClass="bg-emerald-500" /><div className="mt-6 pt-6 border-t border-gray-100"><p className="text-xs text-gray-400 uppercase font-bold mb-2">Resumen Financiero</p><div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-600">Ingresos Totales</span><span className="font-bold text-green-600">{formatCurrency(totalIncome)}</span></div><div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-600">Gastos + Salidas</span><span className="font-bold text-red-500">{formatCurrency(grandTotalExpenses + totalAhorros)}</span></div><div className="flex justify-between items-center pt-2 border-t border-dashed border-gray-100"><span className="text-sm font-bold text-gray-800">Margen Libre</span><span className="font-bold text-blue-600">{formatCurrency(balance)}</span></div></div></div>}
+                                <div className="flex bg-gray-200 p-1 rounded-xl gap-1">
+                                    {[{id: 'general', label: 'Resumen'}, {id: 'tarjetas', label: 'Tarjetas'}, {id: 'ahorro', label: 'Ahorro'}].map(t => (
+                                        <button key={t.id} onClick={() => setChartTab(t.id)} className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${chartTab === t.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t.label}</button>
+                                    ))}
+                                </div>
+                                {chartTab === 'general' && (
+                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                        <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><PieChart size={20} className="text-indigo-500"/> Distribución de Gastos</h3>
+                                        <SimplePieChart data={expenseDistribution} />
+                                    </div>
+                                )}
+                                {chartTab === 'tarjetas' && (
+                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                        <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><CreditCard size={20} className="text-rose-500"/> Deuda vs Pagos</h3>
+                                        {creditCardUsage.length === 0 ? <p className="text-sm text-gray-400 italic text-center py-4">No hay tarjetas registradas.</p> : creditCardUsage.map((c, i) => <ProgressBar key={i} label={c.label} value={c.paid} total={c.total} colorClass="bg-rose-500" />)}
+                                    </div>
+                                )}
+                                {chartTab === 'ahorro' && (
+                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                        <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><PiggyBank size={20} className="text-emerald-500"/> Capacidad de Ahorro</h3>
+                                        <ProgressBar label="Ahorro vs Ingreso" value={totalAhorros} total={totalIncome} colorClass="bg-emerald-500" />
+                                        <div className="mt-6 pt-6 border-t border-gray-100">
+                                            <p className="text-xs text-gray-400 uppercase font-bold mb-2">Resumen Financiero</p>
+                                            <div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-600">Ingresos Totales</span><span className="font-bold text-green-600">{formatCurrency(totalIncome)}</span></div>
+                                            <div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-600">Gastos + Salidas</span><span className="font-bold text-red-500">{formatCurrency(grandTotalExpenses + totalAhorros)}</span></div>
+                                            <div className="flex justify-between items-center pt-2 border-t border-dashed border-gray-100"><span className="text-sm font-bold text-gray-800">Margen Libre</span><span className="font-bold text-blue-600">{formatCurrency(projectedBalance)}</span></div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {currentView === 'ahorros' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                                <SectionCard title="Ahorros" icon={PiggyBank} total={totals.savings} colorClass="bg-white" headerClass="bg-emerald-50 text-emerald-800" readOnly={isReadOnly}>
+                                <SectionCard title="Reservas" icon={PiggyBank} total={totals.savings} colorClass="bg-white" headerClass="bg-emerald-50 text-emerald-800" readOnly={isReadOnly}>
                                     {data.savings.map(i => <EditableRow key={i.id} item={i} readOnly={isReadOnly} onToggle={()=>togglePaid('savings',i.id)} onAmountChange={(v)=>updateAmount('savings',i.id,v)} onNameChange={(v)=>updateName('savings',i.id,v)} showDelete={true} onDelete={()=>delItem('savings',i.id)}/>)}
                                     {!isReadOnly && <div className="mt-2 flex gap-2"><input className="border rounded px-2 py-1 w-full text-sm" placeholder="Meta..." value={newSavingsItem.name} onChange={e=>setNewSavingsItem({...newSavingsItem, name:e.target.value})}/><CurrencyInput className="border rounded px-2 py-1 w-24 text-sm" placeholder="$" value={newSavingsItem.amount} onChange={val=>setNewSavingsItem({...newSavingsItem, amount:val})}/><button onClick={()=>addItem('savings', newSavingsItem, setNewSavingsItem)} className="bg-emerald-500 text-white rounded px-2"><Plus/></button></div>}
                                 </SectionCard>
