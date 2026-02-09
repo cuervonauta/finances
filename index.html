@@ -19,8 +19,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; background-color: #f3f4f6; }
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none; 
+            background-color: #f3f4f6; 
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
         .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -61,7 +69,12 @@
             static getDerivedStateFromError(error) { return { hasError: true }; }
             componentDidCatch(error, errorInfo) { console.error("Error App:", error, errorInfo); }
             render() {
-                if (this.state.hasError) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center"><h1 className="text-2xl font-bold text-red-600 mb-2">¡Ups! Algo salió mal</h1><button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">♻️ Reiniciar Todo</button></div>;
+                if (this.state.hasError) return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                        <h1 className="text-2xl font-bold text-red-600 mb-2">¡Ups! Algo salió mal</h1>
+                        <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">♻️ Reiniciar Todo</button>
+                    </div>
+                );
                 return this.props.children;
             }
         }
@@ -143,23 +156,52 @@
         const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
         const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        // --- COMPONENTES LOGIN & ONBOARDING (Sin cambios mayores, solo diseño) ---
+        // --- COMPONENTES LOGIN & ONBOARDING ---
         const LoginScreen = ({ onLogin }) => {
             const [isLoading, setIsLoading] = useState(false);
+            
             const handleLogin = () => {
                 setIsLoading(true);
+                // Simulación de delay de red para Google Auth
                 setTimeout(() => {
-                    const mockUser = { email: "usuario@gmail.com", photo: null };
+                    const mockUser = {
+                        // name: "Usuario Google", // Ya no forzamos el nombre aquí
+                        email: "usuario@gmail.com",
+                        photo: null
+                    };
                     onLogin(mockUser);
                 }, 1500);
             };
+
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white slide-up">
                     <div className="w-full max-w-sm">
-                        <div className="flex justify-center mb-8"><div className="p-4 bg-indigo-50 rounded-2xl"><span className="text-4xl">💸</span></div></div>
-                        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">Bienvenido</h1>
-                        <p className="text-center text-gray-500 mb-8 text-sm">Tus finanzas, simplificadas.</p>
-                        <button onClick={handleLogin} disabled={isLoading} className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl hover:bg-gray-50 transition-all shadow-sm">{isLoading ? <Loader2 className="animate-spin text-gray-400" size={20}/> : <><Google size={20}/> <span>Continuar con Google</span></>}</button>
+                        <div className="flex justify-center mb-8">
+                            <div className="p-4 bg-indigo-50 rounded-2xl">
+                                <span className="text-4xl">💸</span>
+                            </div>
+                        </div>
+                        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">Bienvenido a Mis Finanzas</h1>
+                        <p className="text-center text-gray-500 mb-8 text-sm">Gestiona tus ingresos y gastos de forma inteligente y segura.</p>
+                        
+                        <div className="space-y-4">
+                            <button 
+                                onClick={handleLogin}
+                                disabled={isLoading}
+                                className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl hover:bg-gray-50 transition-all shadow-sm relative overflow-hidden"
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="animate-spin text-gray-400" size={20}/>
+                                ) : (
+                                    <>
+                                        <Google size={20}/> <span>Continuar con Google</span>
+                                    </>
+                                )}
+                            </button>
+                            <p className="text-xs text-center text-gray-400 mt-6">
+                                Al continuar, aceptas nuestros términos de servicio y política de privacidad.
+                            </p>
+                        </div>
                     </div>
                 </div>
             );
@@ -170,11 +212,34 @@
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white slide-up">
                     <div className="w-full max-w-sm">
-                        <div className="flex justify-center mb-6"><div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600"><UserCircle size={32}/></div></div>
+                        <div className="flex justify-center mb-6">
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                <UserCircle size={32}/>
+                            </div>
+                        </div>
                         <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">¡Hola!</h2>
                         <p className="text-center text-gray-500 mb-8 text-sm">¿Cómo te gustaría que te llamemos?</p>
-                        <input autoFocus className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-lg font-medium focus:outline-none focus:border-indigo-500 transition-colors mb-4" placeholder="Ej. Alex" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSaveName(name)} />
-                        <button onClick={() => onSaveName(name)} disabled={!name.trim()} className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-200">Continuar</button>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-1 block">Tu Nombre</label>
+                                <input 
+                                    autoFocus
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-lg font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                                    placeholder="Ej. Alex"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSaveName(name)}
+                                />
+                            </div>
+                            <button 
+                                onClick={() => onSaveName(name)}
+                                disabled={!name.trim()}
+                                className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200"
+                            >
+                                Continuar
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -184,11 +249,31 @@
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 slide-up">
                     <div className="w-full max-w-sm">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Configuración</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Configuremos tu espacio</h2>
                         <p className="text-gray-500 mb-8 text-sm">¿Qué tipo de finanzas deseas gestionar?</p>
+                        
                         <div className="grid gap-4">
-                            <button onClick={() => onSelectMode('personal')} className="group bg-white p-6 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all text-left"><div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"><User size={24}/></div><h3 className="font-bold text-gray-800 text-lg">Finanzas Personales</h3><p className="text-xs text-gray-500 mt-1">Hogar, suscripciones y tarjetas.</p></button>
-                            <button onClick={() => onSelectMode('business')} className="group bg-white p-6 rounded-2xl border border-gray-200 hover:border-emerald-500 hover:shadow-md transition-all text-left"><div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><Briefcase size={24}/></div><h3 className="font-bold text-gray-800 text-lg">Mi Negocio</h3><p className="text-xs text-gray-500 mt-1">Ventas, insumos y caja.</p></button>
+                            <button 
+                                onClick={() => onSelectMode('personal')}
+                                className="group bg-white p-6 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all text-left"
+                            >
+                                <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <User size={24}/>
+                                </div>
+                                <h3 className="font-bold text-gray-800 text-lg">Finanzas Personales</h3>
+                                <p className="text-xs text-gray-500 mt-1">Hogar, suscripciones, tarjetas de crédito y ahorros personales.</p>
+                            </button>
+
+                            <button 
+                                onClick={() => onSelectMode('business')}
+                                className="group bg-white p-6 rounded-2xl border border-gray-200 hover:border-emerald-500 hover:shadow-md transition-all text-left"
+                            >
+                                <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                    <Briefcase size={24}/>
+                                </div>
+                                <h3 className="font-bold text-gray-800 text-lg">Mi Negocio</h3>
+                                <p className="text-xs text-gray-500 mt-1">Costos operativos, proveedores, insumos y flujo de caja.</p>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -245,18 +330,39 @@
             return (
                 <section className={`rounded-2xl shadow-sm border border-gray-100 overflow-hidden bg-white transition-all hover:shadow-md flex flex-col h-full`}>
                     <div className={`px-4 py-3 flex justify-between items-start relative overflow-hidden shrink-0 ${headerClass}`}>
-                        {hasPaidProp && (<div className="absolute bottom-0 left-0 w-full h-1 bg-black/5"><div className="h-full bg-current opacity-40 transition-all duration-500" style={{ width: `${progress}%` }}></div></div>)}
+                        {hasPaidProp && (
+                            <div className="absolute bottom-0 left-0 w-full h-1 bg-black/5">
+                                <div className="h-full bg-current opacity-40 transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        )}
                         <div className="flex items-center gap-2 mt-0.5 flex-1 relative z-10 overflow-hidden">
-                            <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm shadow-sm"><Icon size={16} className="shrink-0" /></div>
-                            {onTitleChange && !readOnly ? (<input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)} className="font-bold text-base bg-transparent border-b border-dashed border-current/30 focus:border-current focus:outline-none w-full mr-2 placeholder-current/50 truncate"/>) : (<span className="font-bold text-base truncate">{title}</span>)}
+                            <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm shadow-sm">
+                                <Icon size={16} className="shrink-0" />
+                            </div>
+                            {onTitleChange && !readOnly ? (
+                                <input 
+                                    type="text" 
+                                    value={title} 
+                                    onChange={(e) => onTitleChange(e.target.value)} 
+                                    className="font-bold text-base bg-transparent border-b border-dashed border-current/30 focus:border-current focus:outline-none w-full mr-2 placeholder-current/50 truncate"
+                                />
+                            ) : (
+                                <span className="font-bold text-base truncate">{title}</span>
+                            )}
                         </div>
                         <div className="flex flex-col items-end gap-0.5 shrink-0 relative z-10 ml-2">
                             <span className="text-lg font-extrabold leading-none tracking-tight">{formatCurrency(hasPaidProp ? remaining : total)}</span>
-                            {hasPaidProp && (<div className="flex items-center gap-1 text-[9px] font-bold opacity-70 bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5"><span>{Math.round(progress)}%</span></div>)}
+                            {hasPaidProp && (
+                                <div className="flex items-center gap-1 text-[9px] font-bold opacity-70 bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5">
+                                    <span>{Math.round(progress)}%</span>
+                                </div>
+                            )}
                             {onDeleteSection && !readOnly && <button onClick={onDeleteSection} className="opacity-50 hover:opacity-100 mt-1 absolute -right-2 -top-2 p-2"><Trash2 size={14}/></button>}
                         </div>
                     </div>
-                    <div className={`p-2 flex-1 ${readOnly ? 'pointer-events-none opacity-80' : ''}`}><div className="space-y-1">{children}</div></div>
+                    <div className={`p-2 flex-1 ${readOnly ? 'pointer-events-none opacity-80' : ''}`}>
+                        <div className="space-y-1">{children}</div>
+                    </div>
                 </section>
             );
         };
@@ -274,42 +380,364 @@
             </button>
         );
 
-        // Componentes genéricos simplificados para brevedad pero funcionales
+        // Componentes genéricos 
         const CurrencyInput = ({ value, onChange, className, placeholder, disabled, autoFocus }) => {
-            const format = (val) => { if (val === '' || val === undefined || val === null) return ''; return val.toString().replace(/\./g, '').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
-            const handleChange = (e) => { const raw = e.target.value.replace(/\./g, ''); if (!/^\d*$/.test(raw)) return; onChange(raw); };
-            return (<input type="text" inputMode="numeric" value={format(value)} onChange={handleChange} className={className} placeholder={placeholder} disabled={disabled} autoFocus={autoFocus} />);
+            const format = (val) => { 
+                if (val === '' || val === undefined || val === null) return ''; 
+                return val.toString().replace(/\./g, '').replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
+            };
+            const handleChange = (e) => { 
+                const raw = e.target.value.replace(/\./g, ''); 
+                if (!/^\d*$/.test(raw)) return; 
+                onChange(raw); 
+            };
+            return (
+                <input 
+                    type="text" 
+                    inputMode="numeric" 
+                    value={format(value)} 
+                    onChange={handleChange} 
+                    className={className} 
+                    placeholder={placeholder} 
+                    disabled={disabled} 
+                    autoFocus={autoFocus} 
+                />
+            );
         };
+
         const AddItemRow = ({ name, amount, onNameChange, onAmountChange, onAdd, placeholder = "Nuevo item..." }) => (
             <div className="mt-2 px-3 py-2 border border-dashed border-gray-200 rounded-xl flex items-center gap-2 group hover:border-gray-300 hover:bg-gray-50/50 transition-all focus-within:border-indigo-300 focus-within:bg-indigo-50/10">
                 <div className="p-1.5 rounded-lg bg-gray-100 text-gray-400 group-hover:text-gray-600 transition-colors"><Plus size={14}/></div>
-                <input className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 font-medium" placeholder={placeholder} value={name} onChange={onNameChange} onKeyDown={(e) => e.key === 'Enter' && onAdd()} />
-                <div className="w-px h-4 bg-gray-200"></div><div className="relative w-20"><span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span><CurrencyInput className="w-full bg-transparent text-right text-sm font-bold outline-none placeholder-gray-300 text-gray-700" placeholder="0" value={amount} onChange={onAmountChange} onKeyDown={(e) => e.key === 'Enter' && onAdd()} /></div>
-                <button onClick={onAdd} disabled={!name || !amount} className="p-1.5 rounded-lg bg-gray-900 text-white opacity-0 group-focus-within:opacity-100 disabled:opacity-0 hover:bg-black transition-all shadow-sm"><Check size={14}/></button>
+                <input 
+                    className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 font-medium" 
+                    placeholder={placeholder} 
+                    value={name} 
+                    onChange={onNameChange} 
+                    onKeyDown={(e) => e.key === 'Enter' && onAdd()} 
+                />
+                <div className="w-px h-4 bg-gray-200"></div>
+                <div className="relative w-20">
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
+                    <CurrencyInput 
+                        className="w-full bg-transparent text-right text-sm font-bold outline-none placeholder-gray-300 text-gray-700" 
+                        placeholder="0" 
+                        value={amount} 
+                        onChange={onAmountChange} 
+                        onKeyDown={(e) => e.key === 'Enter' && onAdd()} 
+                    />
+                </div>
+                <button 
+                    onClick={onAdd} 
+                    disabled={!name || !amount} 
+                    className="p-1.5 rounded-lg bg-gray-900 text-white opacity-0 group-focus-within:opacity-100 disabled:opacity-0 hover:bg-black transition-all shadow-sm"
+                >
+                    <Check size={14}/>
+                </button>
             </div>
         );
+
         const EditableRow = ({ item, readOnly, onToggle, onAmountChange, onNameChange, showDelete, onDelete }) => (
             <div className={`group flex items-center justify-between px-3 py-2.5 rounded-lg transition-all hover:bg-gray-50 ${item.paid ? 'opacity-50' : ''}`}>
-                <div className="flex items-center gap-3 flex-1"><button onClick={!readOnly ? onToggle : undefined} className={`transition-all active:scale-90 ${item.paid ? 'text-emerald-500' : 'text-gray-300 hover:text-gray-400'}`}>{item.paid ? <CheckCircle2 size={20} className="fill-emerald-100"/> : <Circle size={20}/>}</button>{!readOnly && onNameChange ? (<input type="text" value={item.name} onChange={(e) => onNameChange(e.target.value)} className="font-medium text-gray-700 bg-transparent border-b border-dashed border-transparent hover:border-gray-300 focus:border-indigo-500 outline-none w-full transition-colors text-sm" />) : (<span className={`font-medium text-sm ${item.paid ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.name}</span>)}</div>
-                <div className="flex items-center gap-2 pl-2"><span className="text-[10px] text-gray-400 mt-0.5">$</span><CurrencyInput disabled={readOnly} value={item.amount} onChange={(val) => onAmountChange(val)} className={`w-20 text-right font-bold bg-transparent outline-none text-sm ${item.paid ? 'text-gray-400' : 'text-gray-800'}`}/>{showDelete && !readOnly && <button onClick={onDelete} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1"><Trash2 size={14}/></button>}</div>
+                <div className="flex items-center gap-3 flex-1">
+                    <button onClick={!readOnly ? onToggle : undefined} className={`transition-all active:scale-90 ${item.paid ? 'text-emerald-500' : 'text-gray-300 hover:text-gray-400'}`}>
+                        {item.paid ? <CheckCircle2 size={20} className="fill-emerald-100"/> : <Circle size={20}/>}
+                    </button>
+                    {!readOnly && onNameChange ? (
+                        <input type="text" value={item.name} onChange={(e) => onNameChange(e.target.value)} className="font-medium text-gray-700 bg-transparent border-b border-dashed border-transparent hover:border-gray-300 focus:border-indigo-500 outline-none w-full transition-colors text-sm" />
+                    ) : (
+                        <span className={`font-medium text-sm ${item.paid ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.name}</span>
+                    )}
+                </div>
+                <div className="flex items-center gap-2 pl-2">
+                    <span className="text-[10px] text-gray-400 mt-0.5">$</span>
+                    <CurrencyInput disabled={readOnly} value={item.amount} onChange={(val) => onAmountChange(val)} className={`w-20 text-right font-bold bg-transparent outline-none text-sm ${item.paid ? 'text-gray-400' : 'text-gray-800'}`}/>
+                    {showDelete && !readOnly && <button onClick={onDelete} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1"><Trash2 size={14}/></button>}
+                </div>
             </div>
         );
+
+        const DetailedCreditCardRow = ({ item, readOnly, onUpdate, onDelete }) => {
+            const isPaid = item.status === 'paid' || item.status === 'no_debt';
+            const isNoDebt = item.status === 'no_debt';
+            const isLinea = item.type === 'linea';
+            const available = (Number(item.limit) || 0) - (Number(item.totalDebt) || 0);
+            
+            return (
+                <div className="border-b border-rose-100 last:border-0 py-4">
+                    <div className="flex justify-between items-start mb-3">
+                        <div>
+                            <span className="text-xs font-bold text-rose-800 uppercase tracking-wide flex items-center gap-1">
+                                {item.type === 'tc_pesos' ? <DollarSign size={12}/> : item.type === 'tc_dolares' ? <span className="text-[10px]">USD</span> : <RotateCcw size={12}/>}
+                                {item.name}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <select 
+                                    disabled={readOnly} 
+                                    value={item.status} 
+                                    onChange={(e) => onUpdate('status', e.target.value)} 
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full appearance-none border transition-colors cursor-pointer outline-none ${item.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : item.status === 'no_debt' ? 'bg-gray-50 text-gray-500 border-gray-100' : 'bg-white text-rose-600 border-rose-200 shadow-sm'}`}
+                                >
+                                    <option value="pending">Pendiente de Pago</option>
+                                    <option value="paid">Pagado Completo</option>
+                                    <option value="no_debt">Sin Deuda / Uso</option>
+                                </select>
+                            </div>
+                        </div>
+                        {!readOnly && <button onClick={onDelete} className="text-rose-200 hover:text-rose-500 p-1"><X size={16}/></button>}
+                    </div>
+
+                    {!isNoDebt && (
+                        <div className="space-y-3 bg-rose-50/30 p-3 rounded-xl">
+                            {!isLinea && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Deuda Total (Info)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
+                                                <CurrencyInput disabled={readOnly} value={item.totalDebt} onChange={(val) => onUpdate('totalDebt', val)} className="w-full bg-white border border-gray-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 outline-none" placeholder="0" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Fecha Corte</label>
+                                            <input type="date" disabled={readOnly} value={item.cutoffDate || ''} onChange={(e) => onUpdate('cutoffDate', e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 outline-none" />
+                                        </div>
+                                    </div>
+                                    <div className="h-px bg-rose-100/50"></div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[9px] text-rose-600/70 font-bold uppercase block mb-1">Facturado (A Pagar)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-rose-400 text-[10px]">$</span>
+                                                <CurrencyInput disabled={readOnly} value={item.monthlyQuota} onChange={(val) => onUpdate('monthlyQuota', val)} className="w-full bg-white border border-rose-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-rose-700 focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none shadow-sm" placeholder="0" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] text-emerald-600/70 font-bold uppercase block mb-1">Abonado</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-emerald-400 text-[10px]">$</span>
+                                                <CurrencyInput disabled={readOnly} value={item.payedAmount} onChange={(val) => onUpdate('payedAmount', val)} className="w-full bg-white border border-emerald-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-emerald-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none shadow-sm" placeholder="0" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                            {isLinea && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Cupo Total Autorizado</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
+                                                <CurrencyInput disabled={readOnly} value={item.limit} onChange={(val) => onUpdate('limit', val)} className="w-full bg-white border border-gray-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-gray-600 focus:border-rose-400 outline-none" placeholder="0" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] text-rose-600/70 font-bold uppercase block mb-1">Deuda Total (Uso)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-rose-400 text-[10px]">$</span>
+                                                <CurrencyInput disabled={readOnly} value={item.totalDebt} onChange={(val) => onUpdate('totalDebt', val)} className="w-full bg-white border border-rose-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-rose-700 focus:border-rose-500 outline-none shadow-sm" placeholder="0" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="h-px bg-rose-100/50"></div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 font-bold uppercase block mb-1">Disponible Real</label>
+                                            <div className="w-full bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-500 flex items-center gap-1">
+                                                <span className="text-[10px]">$</span>{formatCurrency(available).replace('$','')}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] text-emerald-600/70 font-bold uppercase block mb-1">Abonado a la Línea</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-emerald-400 text-[10px]">$</span>
+                                                <CurrencyInput disabled={readOnly} value={item.payedAmount} onChange={(val) => onUpdate('payedAmount', val)} className="w-full bg-white border border-emerald-200 rounded-lg pl-5 pr-2 py-1.5 text-xs font-bold text-emerald-700 focus:border-emerald-500 outline-none shadow-sm" placeholder="0" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         const SimplePieChart = ({ data }) => {
             const total = data.reduce((acc, item) => acc + item.value, 0);
             if (total === 0) return <div className="flex flex-col items-center justify-center h-48 text-gray-400"><PieChart size={32} className="mb-2 opacity-50"/><p className="text-xs">Sin datos</p></div>;
-            return (<div className="flex flex-col items-center"><div className="relative w-40 h-40 mb-4"><svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">{data.map((item, index) => { const percent = item.value / total; const start = 0; let cumulativePercent = 0; for(let i=0; i<index; i++) cumulativePercent += data[i].value / total; const startPercent = cumulativePercent; const endPercent = startPercent + percent; const x1 = 50 + 50 * Math.cos(2 * Math.PI * startPercent); const y1 = 50 + 50 * Math.sin(2 * Math.PI * startPercent); const x2 = 50 + 50 * Math.cos(2 * Math.PI * endPercent); const y2 = 50 + 50 * Math.sin(2 * Math.PI * endPercent); const largeArc = percent > 0.5 ? 1 : 0; const pathData = percent === 1 ? "M 50 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0" : `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`; return <path key={index} d={pathData} fill={item.color} stroke="white" strokeWidth="1" />; })}</svg></div><div className="w-full space-y-1">{data.map((item, index) => (<div key={index} className="flex justify-between items-center text-xs"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></span><span className="text-gray-600">{item.label}</span></div><span className="font-bold text-gray-800">{formatCurrency(item.value)}</span></div>))}</div></div>);
+            return (
+                <div className="flex flex-col items-center">
+                    <div className="relative w-40 h-40 mb-4">
+                        <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
+                            {data.map((item, index) => {
+                                const percent = item.value / total;
+                                const start = 0; 
+                                let cumulativePercent = 0;
+                                for(let i=0; i<index; i++) cumulativePercent += data[i].value / total;
+                                
+                                const startPercent = cumulativePercent;
+                                const endPercent = startPercent + percent;
+
+                                const x1 = 50 + 50 * Math.cos(2 * Math.PI * startPercent);
+                                const y1 = 50 + 50 * Math.sin(2 * Math.PI * startPercent);
+                                const x2 = 50 + 50 * Math.cos(2 * Math.PI * endPercent);
+                                const y2 = 50 + 50 * Math.sin(2 * Math.PI * endPercent);
+                                const largeArc = percent > 0.5 ? 1 : 0;
+                                const pathData = percent === 1 ? "M 50 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0" : `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                                return <path key={index} d={pathData} fill={item.color} stroke="white" strokeWidth="1" />;
+                            })}
+                        </svg>
+                    </div>
+                    <div className="w-full space-y-1">
+                        {data.map((item, index) => (
+                            <div key={index} className="flex justify-between items-center text-xs">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                    <span className="text-gray-600">{item.label}</span>
+                                </div>
+                                <span className="font-bold text-gray-800">{formatCurrency(item.value)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
         };
+
         const SettingsModal = ({ isOpen, onClose, url, onSave, currentData, onImport, onUpdateUser, userSettings, onLogout }) => {
             const [tempUrl, setTempUrl] = useState(url);
             const [tempName, setTempName] = useState(userSettings?.name || '');
-            useEffect(() => { setTempUrl(url); setTempName(userSettings?.name || ''); }, [url, isOpen, userSettings]);
+            
+            useEffect(() => { 
+                setTempUrl(url); 
+                setTempName(userSettings?.name || ''); 
+            }, [url, isOpen, userSettings]);
+
             if (!isOpen) return null;
-            const handleExport = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentData)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `backup_finanzas_${new Date().toISOString().split('T')[0]}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); };
-            const handleUserUpdate = (key, val) => { onUpdateUser(key, val); if(key === 'name') setTempName(val); };
-            return (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in"><div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"><div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Settings size={18}/> Configuración</h3><button onClick={onClose}><X size={20} className="text-gray-400 hover:text-gray-600"/></button></div><div className="p-4 space-y-6"><div className="space-y-4"><h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><UserCircle size={12}/> Personalización</h4><div className="space-y-2"><label className="text-xs text-gray-500 font-bold">Tu Nombre</label><input className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-indigo-500" placeholder="Ej. Juan Pérez" value={tempName} onChange={(e) => handleUserUpdate('name', e.target.value)} /></div><div className="space-y-2"><label className="text-xs text-gray-500 font-bold flex items-center gap-1"><Palette size={12}/> Color Principal</label><div className="grid grid-cols-6 gap-2">{Object.entries(THEMES).map(([key, theme]) => (<button key={key} onClick={() => handleUserUpdate('theme', key)} className={`w-8 h-8 rounded-full ${theme.bg} transition-transform active:scale-90 flex items-center justify-center ring-offset-1 ${userSettings?.theme === key ? 'ring-2 ring-gray-400 scale-110' : ''}`} title={theme.name}>{userSettings?.theme === key && <Check size={14} className="text-white"/>}</button>))}</div></div></div><div className="h-px bg-gray-100"></div><div className="space-y-2"><label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Cloud size={12}/> Google Apps Script URL</label><input className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500" placeholder="https://script.google.com/..." value={tempUrl} onChange={(e) => setTempUrl(e.target.value)} /><button onClick={() => { onSave(tempUrl); onClose(); }} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700">Guardar URL</button></div><div className="space-y-3 pt-4 border-t border-gray-100"><h4 className="text-xs font-bold text-gray-400 uppercase">Gestión de Datos</h4><div className="grid grid-cols-2 gap-2"><button onClick={handleExport} className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 border border-emerald-100"><Download size={14}/> Exportar JSON</button><label className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 border border-blue-100 cursor-pointer"><Upload size={14}/> Importar JSON<input type="file" className="hidden" accept=".json" onChange={(e) => { const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (ev) => { try { const parsed = JSON.parse(ev.target.result); if(window.confirm('¿Restaurar respaldo? Se perderán los cambios actuales.')) { onImport(parsed); onClose(); } } catch(ex) { alert('Archivo inválido'); } }; reader.readAsText(file); }}/></label></div></div><button onClick={() => { if(window.confirm('¿Cerrar sesión?')) { onLogout(); onClose(); }}} className="w-full py-2 text-red-500 text-xs font-bold flex items-center justify-center gap-2 border border-red-100 rounded-lg hover:bg-red-50"><Logout size={14}/> Cerrar Sesión</button><div className="pt-2 text-center"><p className="text-[10px] text-gray-400">Versión 2.9 (Desktop Responsive)</p></div></div></div></div>);
+
+            const handleExport = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentData));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", `backup_finanzas_${new Date().toISOString().split('T')[0]}.json`);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            const handleUserUpdate = (key, val) => { 
+                onUpdateUser(key, val); 
+                if(key === 'name') setTempName(val); 
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2"><Settings size={18}/> Configuración</h3>
+                            <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-gray-600"/></button>
+                        </div>
+                        <div className="p-4 space-y-6">
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><UserCircle size={12}/> Personalización</h4>
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-500 font-bold">Tu Nombre</label>
+                                    <input 
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-indigo-500" 
+                                        placeholder="Ej. Juan Pérez" 
+                                        value={tempName} 
+                                        onChange={(e) => handleUserUpdate('name', e.target.value)} 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs text-gray-500 font-bold flex items-center gap-1"><Palette size={12}/> Color Principal</label>
+                                    <div className="grid grid-cols-6 gap-2">
+                                        {Object.entries(THEMES).map(([key, theme]) => (
+                                            <button 
+                                                key={key} 
+                                                onClick={() => handleUserUpdate('theme', key)} 
+                                                className={`w-8 h-8 rounded-full ${theme.bg} transition-transform active:scale-90 flex items-center justify-center ring-offset-1 ${userSettings?.theme === key ? 'ring-2 ring-gray-400 scale-110' : ''}`} 
+                                                title={theme.name}
+                                            >
+                                                {userSettings?.theme === key && <Check size={14} className="text-white"/>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="h-px bg-gray-100"></div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><Cloud size={12}/> Google Apps Script URL</label>
+                                <input 
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500" 
+                                    placeholder="https://script.google.com/..." 
+                                    value={tempUrl} 
+                                    onChange={(e) => setTempUrl(e.target.value)} 
+                                />
+                                <button onClick={() => { onSave(tempUrl); onClose(); }} className="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700">Guardar URL</button>
+                            </div>
+                            <div className="space-y-3 pt-4 border-t border-gray-100">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase">Gestión de Datos</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={handleExport} className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100 border border-emerald-100">
+                                        <Download size={14}/> Exportar JSON
+                                    </button>
+                                    <label className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 border border-blue-100 cursor-pointer">
+                                        <Upload size={14}/> Importar JSON
+                                        <input type="file" className="hidden" accept=".json" onChange={(e) => { 
+                                            const file = e.target.files[0]; 
+                                            if(!file) return; 
+                                            const reader = new FileReader(); 
+                                            reader.onload = (ev) => { 
+                                                try { 
+                                                    const parsed = JSON.parse(ev.target.result); 
+                                                    if(window.confirm('¿Restaurar respaldo? Se perderán los cambios actuales.')) { 
+                                                        onImport(parsed); 
+                                                        onClose(); 
+                                                    } 
+                                                } catch(ex) { alert('Archivo inválido'); } 
+                                            }; 
+                                            reader.readAsText(file); 
+                                        }}/>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            {/* Cerrar Sesión */}
+                            <button onClick={() => { if(window.confirm('¿Cerrar sesión?')) { onLogout(); onClose(); }}} className="w-full py-2 text-red-500 text-xs font-bold flex items-center justify-center gap-2 border border-red-100 rounded-lg hover:bg-red-50">
+                                <Logout size={14}/> Cerrar Sesión
+                            </button>
+                            
+                            <div className="pt-2 text-center">
+                                <p className="text-[10px] text-gray-400">Versión 2.9.1 (Full Expanded)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
-        const INITIAL_DATA = { isClosed: false, userSettings: { name: '', theme: 'indigo', appMode: null }, income: 0, extraIncome: 0, businessIncome: { configSet: false, types: { products: false, workshops: false, supplies: false }, items: { products: [], workshops: [], supplies: [] } }, supermarket: { budget: 0, items: [], lists: [] }, hogar: [], subscriptions: [], creditCards: [], customModules: [], savings: [], loansGiven: [], streetFood: [] };
+        // --- INICIALIZACIÓN ---
+        const INITIAL_DATA = { 
+            isClosed: false, 
+            userSettings: { name: '', theme: 'indigo', appMode: null }, 
+            income: 0, 
+            extraIncome: 0, 
+            businessIncome: { 
+                configSet: false, 
+                types: { products: false, workshops: false, supplies: false }, 
+                items: { products: [], workshops: [], supplies: [] } 
+            }, 
+            supermarket: { budget: 0, items: [], lists: [] }, 
+            hogar: [], 
+            subscriptions: [], 
+            creditCards: [], 
+            customModules: [], 
+            savings: [], 
+            loansGiven: [], 
+            streetFood: [] 
+        };
 
         // --- APP MAIN ---
         const App = () => {
@@ -337,6 +765,8 @@
             const [newBankTypes, setNewBankTypes] = useState({ pesos: true, dolares: true, linea: true });
             const [isAddingBank, setIsAddingBank] = useState(false);
             const [customModuleInputs, setCustomModuleInputs] = useState({});
+            
+            // Inputs for Business
             const [newBizProduct, setNewBizProduct] = useState({ name: '', amount: '' });
             const [newBizSupply, setNewBizSupply] = useState({ name: '', amount: '' });
             const [newBizWorkshop, setNewBizWorkshop] = useState({ name: '', price: '', count: '' });
@@ -345,40 +775,182 @@
             const getStorageKey = (m, y) => `finance-v18-${y}-${m}`;
 
             // --- Handlers & Effects ---
-            const handleLogin = (user) => { const session = { isAuthenticated: true, user }; setAuth(session); localStorage.setItem('finance_user_session', JSON.stringify(session)); };
-            const handleNameSubmit = (name) => { if(!name.trim()) return; const newData = { ...data, userSettings: { ...data.userSettings, name: name } }; setData(newData); const key = getStorageKey(viewDate.month, viewDate.year); localStorage.setItem(key, JSON.stringify(newData)); };
-            const handleLogout = () => { localStorage.removeItem('finance_user_session'); setAuth({ isAuthenticated: false, user: null }); window.location.reload(); };
-            const handleModeSelect = (mode) => { const newData = { ...data, userSettings: { ...data.userSettings, appMode: mode } }; setData(newData); const key = getStorageKey(viewDate.month, viewDate.year); localStorage.setItem(key, JSON.stringify(newData)); };
+            const handleLogin = (user) => { 
+                const session = { isAuthenticated: true, user }; 
+                setAuth(session); 
+                localStorage.setItem('finance_user_session', JSON.stringify(session)); 
+            };
+
+            const handleNameSubmit = (name) => { 
+                if(!name.trim()) return; 
+                const newData = { 
+                    ...data, 
+                    userSettings: { ...data.userSettings, name: name } 
+                }; 
+                setData(newData); 
+                const key = getStorageKey(viewDate.month, viewDate.year); 
+                localStorage.setItem(key, JSON.stringify(newData)); 
+            };
+
+            const handleLogout = () => { 
+                localStorage.removeItem('finance_user_session'); 
+                setAuth({ isAuthenticated: false, user: null }); 
+                window.location.reload(); 
+            };
+
+            const handleModeSelect = (mode) => { 
+                const newData = { 
+                    ...data, 
+                    userSettings: { ...data.userSettings, appMode: mode } 
+                }; 
+                setData(newData); 
+                const key = getStorageKey(viewDate.month, viewDate.year); 
+                localStorage.setItem(key, JSON.stringify(newData)); 
+            };
             
             const getLabels = () => {
                 const mode = data.userSettings?.appMode || 'personal';
-                return mode === 'business' ? { mode: 'business', hogarTitle: 'Mi Negocio', hogarIcon: Store, superTitle: 'Compras / Insumos', hogarItemsDef: 'Gastos Operativos', listTitle: 'Listas de Compras' } : { mode: 'personal', hogarTitle: 'Hogar', hogarIcon: Home, superTitle: 'Supermercado', hogarItemsDef: 'Gastos del Hogar', listTitle: 'Listas de Mercado' };
+                return mode === 'business' ? { 
+                    mode: 'business', 
+                    hogarTitle: 'Mi Negocio', 
+                    hogarIcon: Store, 
+                    superTitle: 'Compras / Insumos', 
+                    hogarItemsDef: 'Gastos Operativos', 
+                    listTitle: 'Listas de Compras' 
+                } : { 
+                    mode: 'personal', 
+                    hogarTitle: 'Hogar', 
+                    hogarIcon: Home, 
+                    superTitle: 'Supermercado', 
+                    hogarItemsDef: 'Gastos del Hogar', 
+                    listTitle: 'Listas de Mercado' 
+                };
             };
             const LABELS = getLabels();
             const currentTheme = THEMES[data.userSettings?.theme] || THEMES.indigo;
 
-            // ... (Lógica de persistencia, reseteo mensual, etc - mantenida igual) ...
-            const toggleMonthStatus = () => { if(window.confirm(`¿Estás seguro de ${data.isClosed ? "abrir" : "cerrar"} el mes?`)) setData({ ...data, isClosed: !data.isClosed }); };
-            const resetMonth = () => { if (data.isClosed) return; if(!window.confirm("¿Reiniciar valores?")) return; const zeroList = (list) => list.map(i => ({...i, amount: 0, paid: false})); const zeroCards = (list) => list.map(i => ({...i, monthlyQuota: 0, payedAmount: 0, status: 'pending'})); const zeroModules = (modules) => modules.map(m => ({ ...m, items: m.items.map(i => ({...i, amount: 0, paid: false})) })); const zeroBiz = { ...data.businessIncome, items: { products: [], workshops: [], supplies: [] } }; setData({ ...data, income: data.income, extraIncome: 0, businessIncome: zeroBiz, supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] }, hogar: zeroList(data.hogar), subscriptions: zeroList(data.subscriptions), creditCards: zeroCards(data.creditCards), customModules: zeroModules(data.customModules), savings: zeroList(data.savings || []), loansGiven: [], streetFood: [] }); };
+            // Handlers
+            const toggleMonthStatus = () => { 
+                if(window.confirm(`¿Estás seguro de ${data.isClosed ? "abrir" : "cerrar"} el mes?`)) 
+                    setData({ ...data, isClosed: !data.isClosed }); 
+            };
+
+            const resetMonth = () => { 
+                if (data.isClosed) return; 
+                if(!window.confirm("¿Reiniciar valores?")) return; 
+                
+                const zeroList = (list) => list.map(i => ({...i, amount: 0, paid: false})); 
+                const zeroCards = (list) => list.map(i => ({...i, monthlyQuota: 0, payedAmount: 0, status: 'pending'})); 
+                const zeroModules = (modules) => modules.map(m => ({ ...m, items: m.items.map(i => ({...i, amount: 0, paid: false})) })); 
+                const zeroBiz = { ...data.businessIncome, items: { products: [], workshops: [], supplies: [] } };
+                
+                setData({ 
+                    ...data, 
+                    income: data.income, 
+                    extraIncome: 0, 
+                    businessIncome: zeroBiz,
+                    supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] }, 
+                    hogar: zeroList(data.hogar), 
+                    subscriptions: zeroList(data.subscriptions), 
+                    creditCards: zeroCards(data.creditCards), 
+                    customModules: zeroModules(data.customModules), 
+                    savings: zeroList(data.savings || []), 
+                    loansGiven: [], 
+                    streetFood: [] 
+                }); 
+            };
+
             const updateList = (k, fn) => !data.isClosed && setData({...data, [k]: fn(data[k] || [])});
-            const updateBizList = (type, fn) => { if (data.isClosed) return; setData({ ...data, businessIncome: { ...data.businessIncome, items: { ...data.businessIncome.items, [type]: fn(data.businessIncome.items[type] || []) } } }); };
-            const addBank = () => { if (!newBankName.trim()) return; const ts = Date.now(); const newCards = []; if (newBankTypes.pesos) newCards.push({ id: `tc-${ts}-1`, bank: newBankName, name: 'TC Pesos', type: 'tc_pesos', totalDebt: 0, monthlyQuota: 0, payedAmount: 0, status: 'pending', cutoffDate: '' }); if (newBankTypes.dolares) newCards.push({ id: `tc-${ts}-2`, bank: newBankName, name: 'TC Dólares', type: 'tc_dolares', totalDebt: 0, monthlyQuota: 0, payedAmount: 0, status: 'pending', cutoffDate: '' }); if (newBankTypes.linea) newCards.push({ id: `tc-${ts}-3`, bank: newBankName, name: 'Línea Crédito', type: 'linea', totalDebt: 0, limit: 0, payedAmount: 0, status: 'pending' }); updateList('creditCards', list => [...list, ...newCards]); setNewBankName(''); setIsAddingBank(false); };
+            
+            const updateBizList = (type, fn) => {
+                if (data.isClosed) return;
+                setData({
+                    ...data,
+                    businessIncome: {
+                        ...data.businessIncome,
+                        items: {
+                            ...data.businessIncome.items,
+                            [type]: fn(data.businessIncome.items[type] || [])
+                        }
+                    }
+                });
+            };
+
+            const addBank = () => { 
+                if (!newBankName.trim()) return; 
+                const ts = Date.now(); 
+                const newCards = []; 
+                if (newBankTypes.pesos) newCards.push({ id: `tc-${ts}-1`, bank: newBankName, name: 'TC Pesos', type: 'tc_pesos', totalDebt: 0, monthlyQuota: 0, payedAmount: 0, status: 'pending', cutoffDate: '' }); 
+                if (newBankTypes.dolares) newCards.push({ id: `tc-${ts}-2`, bank: newBankName, name: 'TC Dólares', type: 'tc_dolares', totalDebt: 0, monthlyQuota: 0, payedAmount: 0, status: 'pending', cutoffDate: '' }); 
+                if (newBankTypes.linea) newCards.push({ id: `tc-${ts}-3`, bank: newBankName, name: 'Línea Crédito', type: 'linea', totalDebt: 0, limit: 0, payedAmount: 0, status: 'pending' }); 
+                updateList('creditCards', list => [...list, ...newCards]); 
+                setNewBankName(''); 
+                setIsAddingBank(false); 
+            };
+
             const updateUser = (key, val) => { setData(prev => ({ ...prev, userSettings: { ...prev.userSettings, [key]: val } })); };
 
             useEffect(() => {
-                const sessionStr = localStorage.getItem('finance_user_session'); if(sessionStr) try { setAuth(JSON.parse(sessionStr)); } catch(e) {}
-                const savedUrl = localStorage.getItem('google_sheet_script_url'); if(savedUrl) setSheetUrl(savedUrl);
-                const key = getStorageKey(viewDate.month, viewDate.year); const savedData = localStorage.getItem(key);
-                if(savedData) { try { const parsed = JSON.parse(savedData); setData({ ...INITIAL_DATA, ...parsed, userSettings: parsed.userSettings || INITIAL_DATA.userSettings }); } catch(e) { setData(INITIAL_DATA); } } 
-                else { 
+                const sessionStr = localStorage.getItem('finance_user_session'); 
+                if(sessionStr) try { setAuth(JSON.parse(sessionStr)); } catch(e) {}
+                
+                const savedUrl = localStorage.getItem('google_sheet_script_url'); 
+                if(savedUrl) setSheetUrl(savedUrl);
+                
+                const key = getStorageKey(viewDate.month, viewDate.year); 
+                const savedData = localStorage.getItem(key);
+                
+                if(savedData) { 
+                    try { 
+                        const parsed = JSON.parse(savedData); 
+                        setData({ ...INITIAL_DATA, ...parsed, userSettings: parsed.userSettings || INITIAL_DATA.userSettings }); 
+                    } catch(e) { setData(INITIAL_DATA); } 
+                } else { 
                     const resetItem = (item) => ({ ...item, amount: 0, paid: false });
-                    const template = { ...INITIAL_DATA, userSettings: data.userSettings, income: data.income, businessIncome: { ...data.businessIncome, items: { products: [], workshops: [], supplies: [] } }, hogar: (data.hogar || []).map(resetItem), subscriptions: (data.subscriptions || []).map(resetItem), customModules: (data.customModules || []).map(m => ({ ...m, items: m.items.map(resetItem) })), savings: (data.savings || []).map(resetItem), creditCards: (data.creditCards || []).map(c => ({ ...c, monthlyQuota: 0, payedAmount: 0, status: 'pending' })), supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] }, streetFood: [], loansGiven: [] };
+                    const template = { 
+                        ...INITIAL_DATA, 
+                        userSettings: data.userSettings, 
+                        income: data.income, 
+                        businessIncome: { 
+                            ...data.businessIncome, 
+                            items: { products: [], workshops: [], supplies: [] } 
+                        }, 
+                        hogar: (data.hogar || []).map(resetItem), 
+                        subscriptions: (data.subscriptions || []).map(resetItem), 
+                        customModules: (data.customModules || []).map(m => ({ ...m, items: m.items.map(resetItem) })), 
+                        savings: (data.savings || []).map(resetItem), 
+                        creditCards: (data.creditCards || []).map(c => ({ ...c, monthlyQuota: 0, payedAmount: 0, status: 'pending' })), 
+                        supermarket: { budget: data.supermarket?.budget || 0, items: [], lists: [] }, 
+                        streetFood: [], 
+                        loansGiven: [] 
+                    };
                     setData(template);
                 }
                 setIsLoaded(true);
             }, [viewDate]);
 
-            useEffect(() => { if(isLoaded && auth.isAuthenticated) { const key = getStorageKey(viewDate.month, viewDate.year); localStorage.setItem(key, JSON.stringify(data)); if(sheetUrl) { setSyncStatus('syncing'); if(debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = setTimeout(async () => { try { await fetch(sheetUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: MONTHS[viewDate.month], year: viewDate.year, ...data }) }); setSyncStatus('success'); setTimeout(() => setSyncStatus('idle'), 2000); } catch(e) { setSyncStatus('error'); } }, 3000); } } }, [data, isLoaded, auth]);
+            useEffect(() => { 
+                if(isLoaded && auth.isAuthenticated) { 
+                    const key = getStorageKey(viewDate.month, viewDate.year); 
+                    localStorage.setItem(key, JSON.stringify(data)); 
+                    if(sheetUrl) { 
+                        setSyncStatus('syncing'); 
+                        if(debounceRef.current) clearTimeout(debounceRef.current); 
+                        debounceRef.current = setTimeout(async () => { 
+                            try { 
+                                await fetch(sheetUrl, { 
+                                    method: 'POST', 
+                                    mode: 'no-cors', 
+                                    headers: { 'Content-Type': 'application/json' }, 
+                                    body: JSON.stringify({ month: MONTHS[viewDate.month], year: viewDate.year, ...data }) 
+                                }); 
+                                setSyncStatus('success'); 
+                                setTimeout(() => setSyncStatus('idle'), 2000); 
+                            } catch(e) { setSyncStatus('error'); } 
+                        }, 3000); 
+                    } 
+                } 
+            }, [data, isLoaded, auth]);
 
             if (!isLoaded) return null;
             if (!auth.isAuthenticated) return <LoginScreen onLogin={handleLogin} />;
@@ -404,11 +976,34 @@
             const creditCalculation = (data.creditCards||[]).reduce((acc, item) => {
                 if(item.status === 'no_debt') return acc;
                 let fullAmount = 0, paidAmount = Number(item.payedAmount) || 0;
-                if (item.type === 'linea') fullAmount = Number(item.totalDebt) || 0; else if (item.type === 'tc_dolares') { const quota = Number(item.monthlyQuota) || 0; fullAmount = quota * USD_VALUE; paidAmount = paidAmount * USD_VALUE; } else fullAmount = Number(item.monthlyQuota) || 0;
+                if (item.type === 'linea') { 
+                    fullAmount = Number(item.totalDebt) || 0; 
+                } else if (item.type === 'tc_dolares') { 
+                    const quota = Number(item.monthlyQuota) || 0; 
+                    fullAmount = quota * USD_VALUE; 
+                    paidAmount = paidAmount * USD_VALUE; 
+                } else { 
+                    fullAmount = Number(item.monthlyQuota) || 0; 
+                }
                 return { total: acc.total + fullAmount, paid: acc.paid + paidAmount };
             }, { total: 0, paid: 0 });
 
-            const totals = { hogar: calcTotal(data.hogar), hogarPaid: calcPaid(data.hogar), subscriptions: calcTotal(data.subscriptions), subscriptionsPaid: calcPaid(data.subscriptions), creditCards: creditCalculation.total, creditCardsPaid: creditCalculation.paid, supermarket: marketSpent, savings: calcTotal(data.savings), savingsPaid: calcPaid(data.savings), loansGiven: calcTotal(data.loansGiven), loansGivenPaid: calcPaid(data.loansGiven), street: calcTotal(data.streetFood), streetPaid: calcPaid(data.streetFood), custom: customTotal };
+            const totals = { 
+                hogar: calcTotal(data.hogar), 
+                hogarPaid: calcPaid(data.hogar), 
+                subscriptions: calcTotal(data.subscriptions), 
+                subscriptionsPaid: calcPaid(data.subscriptions), 
+                creditCards: creditCalculation.total, 
+                creditCardsPaid: creditCalculation.paid, 
+                supermarket: marketSpent, 
+                savings: calcTotal(data.savings), 
+                savingsPaid: calcPaid(data.savings), 
+                loansGiven: calcTotal(data.loansGiven), 
+                loansGivenPaid: calcPaid(data.loansGiven), 
+                street: calcTotal(data.streetFood), 
+                streetPaid: calcPaid(data.streetFood), 
+                custom: customTotal 
+            };
             
             const hogarPending = (totals.hogar - totals.hogarPaid) + (totals.subscriptions - totals.subscriptionsPaid) + (totals.street - totals.streetPaid) + (customTotal - customPaid);
             const creditPending = Math.max(0, totals.creditCards - totals.creditCardsPaid);
@@ -417,28 +1012,81 @@
             const totalAhorros = totals.savings + totals.loansGiven;
             const totalOutflows = grandTotalExpenses + totalAhorros;
             const totalPaidOutflows = totals.hogarPaid + totals.subscriptionsPaid + totals.streetPaid + customPaid + totals.creditCardsPaid + totals.savingsPaid + totals.loansGivenPaid + marketSpent;
+            
             const baseIncome = data.userSettings?.appMode === 'business' ? totalBusinessIncome : (Number(data.income) || 0);
             const totalIncome = baseIncome + (Number(data.extraIncome) || 0);
+            
             const projectedBalance = totalIncome - totalOutflows;
             const currentCashBalance = totalIncome - totalPaidOutflows;
 
-            const expenseDistribution = [{ label: LABELS.hogarTitle, value: totals.hogar + totals.subscriptions + totals.custom + totals.street, color: '#10B981' }, { label: LABELS.superTitle, value: totals.supermarket, color: '#6366F1' }, { label: 'Tarjetas', value: totals.creditCards, color: '#F43F5E' }].filter(i => i.value > 0);
-            const creditCardUsage = (data.creditCards || []).map(card => ({ label: card.name, total: card.type === 'linea' ? (Number(card.totalDebt)||0) : (Number(card.monthlyQuota)||0), paid: Number(card.payedAmount) || 0 })).filter(c => c.total > 0);
+            const expenseDistribution = [
+                { label: LABELS.hogarTitle, value: totals.hogar + totals.subscriptions + totals.custom + totals.street, color: '#10B981' }, 
+                { label: LABELS.superTitle, value: totals.supermarket, color: '#6366F1' }, 
+                { label: 'Tarjetas', value: totals.creditCards, color: '#F43F5E' }
+            ].filter(i => i.value > 0);
+
+            const creditCardUsage = (data.creditCards || []).map(card => ({ 
+                label: card.name, 
+                total: card.type === 'linea' ? (Number(card.totalDebt)||0) : (Number(card.monthlyQuota)||0), 
+                paid: Number(card.payedAmount) || 0 
+            })).filter(c => c.total > 0);
+
             const updateCustomModules = (fn) => !isReadOnly && setData({...data, customModules: fn(data.customModules || [])});
             const updateCustomModuleName = (id, name) => updateCustomModules(list => list.map(m => m.id === id ? { ...m, name } : m));
             const togglePaid = (k, id) => updateList(k, l => l.map(i => i.id === id ? {...i, paid: !i.paid} : i));
             const updateAmount = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, amount: v} : i));
             const updateName = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, name: v} : i));
             const delItem = (k, id) => updateList(k, l => l.filter(i => i.id !== id));
-            const addItem = (k, state, setState) => { if(!state.name || !state.amount || isReadOnly) return; updateList(k, l => [...l, {id: Date.now(), name: state.name, amount: Number(state.amount), paid: false}]); setState({name:'', amount:''}); };
-            const updateCard = (id, field, val) => { if (isReadOnly) return; updateList('creditCards', list => list.map(c => c.id === id ? { ...c, [field]: val } : c)); };
+            
+            const addItem = (k, state, setState) => { 
+                if(!state.name || !state.amount || isReadOnly) return; 
+                updateList(k, l => [...l, {id: Date.now(), name: state.name, amount: Number(state.amount), paid: false}]); 
+                setState({name:'', amount:''}); 
+            };
+            
+            const updateCard = (id, field, val) => { 
+                if (isReadOnly) return; 
+                updateList('creditCards', list => list.map(c => c.id === id ? { ...c, [field]: val } : c)); 
+            };
+            
             const uniqueBanks = [...new Set((data.creditCards || []).map(item => item.bank))];
             const marketBudget = Number(data.supermarket?.budget) || 0;
             const marketRatio = marketBudget > 0 ? (marketSpent / marketBudget) : 0;
-            const handleCreateList = () => { const newList = { id: Date.now(), name: 'Nueva Lista', items: [] }; setData({ ...data, supermarket: { ...data.supermarket, lists: [...(data.supermarket.lists || []), newList] } }); setActiveListId(newList.id); };
+            
+            const handleCreateList = () => { 
+                const newList = { id: Date.now(), name: 'Nueva Lista', items: [] }; 
+                setData({ ...data, supermarket: { ...data.supermarket, lists: [...(data.supermarket.lists || []), newList] } }); 
+                setActiveListId(newList.id); 
+            };
+            
             const activeList = activeListId ? (data.supermarket?.lists || []).find(l => l.id === activeListId) : null;
-            const updateActiveList = (newListData) => { const updatedLists = data.supermarket.lists.map(l => l.id === activeListId ? newListData : l); setData({ ...data, supermarket: { ...data.supermarket, lists: updatedLists } }); };
-            const handleFinishList = (targetList) => { if (!targetList) return; const checkedItems = targetList.items.filter(i => i.checked); if (checkedItems.length === 0) return; const totalSpent = checkedItems.reduce((acc, i) => acc + (Number(i.price) || 0), 0); const hasMissingPrices = checkedItems.some(i => !i.price || Number(i.price) === 0); if (hasMissingPrices) { if (!window.confirm(`Valores inexactos. ¿Seguro?`)) return; } else { if (!window.confirm(`¿Registrar compra por ${formatCurrency(totalSpent)}?`)) return; } const newItem = { id: Date.now(), name: targetList.name, amount: totalSpent, inexact: hasMissingPrices }; const newLists = data.supermarket.lists.filter(l => l.id !== targetList.id); const newHistory = [...(data.supermarket.items || []), newItem]; setData({ ...data, supermarket: { ...data.supermarket, lists: newLists, items: newHistory } }); };
+            
+            const updateActiveList = (newListData) => { 
+                const updatedLists = data.supermarket.lists.map(l => l.id === activeListId ? newListData : l); 
+                setData({ ...data, supermarket: { ...data.supermarket, lists: updatedLists } }); 
+            };
+            
+            const handleFinishList = (targetList) => { 
+                if (!targetList) return; 
+                const checkedItems = targetList.items.filter(i => i.checked); 
+                if (checkedItems.length === 0) return; 
+                
+                const totalSpent = checkedItems.reduce((acc, i) => acc + (Number(i.price) || 0), 0); 
+                const hasMissingPrices = checkedItems.some(i => !i.price || Number(i.price) === 0); 
+                
+                if (hasMissingPrices) { 
+                    if (!window.confirm(`Valores inexactos. ¿Seguro?`)) return; 
+                } else { 
+                    if (!window.confirm(`¿Registrar compra por ${formatCurrency(totalSpent)}?`)) return; 
+                } 
+                
+                const newItem = { id: Date.now(), name: targetList.name, amount: totalSpent, inexact: hasMissingPrices }; 
+                const newLists = data.supermarket.lists.filter(l => l.id !== targetList.id); 
+                const newHistory = [...(data.supermarket.items || []), newItem]; 
+                
+                setData({ ...data, supermarket: { ...data.supermarket, lists: newLists, items: newHistory } }); 
+            };
+            
             const itemsWithoutPrice = activeList ? activeList.items.filter(i => !i.price || Number(i.price) === 0).length : 0;
             const activeListTotal = activeList ? activeList.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0) : 0;
 
@@ -526,7 +1174,23 @@
                                 {currentView === 'ingresos' && data.userSettings?.appMode === 'business' && (
                                     <div className="max-w-[720px] mx-auto space-y-6">
                                         {!data.businessIncome?.configSet ? (
-                                            <div className="flex justify-center"><div className="bg-white p-8 rounded-3xl shadow-lg border border-emerald-100 max-w-md w-full"><div className="flex justify-center mb-6"><div className="p-4 bg-emerald-100 rounded-full text-emerald-600"><TrendingUp size={40}/></div></div><h2 className="text-2xl font-bold text-center text-gray-800 mb-2">Configura tus Ingresos</h2><p className="text-center text-gray-500 text-sm mb-8">¿Qué tipo de ingresos recibes?</p><div className="space-y-4 mb-8">{[{ id: 'products', label: 'Venta de Productos', icon: Package }, { id: 'workshops', label: 'Talleres / Capacitaciones', icon: Presentation }, { id: 'supplies', label: 'Venta de Insumos', icon: Store }].map(opt => (<label key={opt.id} className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${data.businessIncome.types[opt.id] ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-600'}`}><input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={data.businessIncome.types[opt.id]} onChange={(e) => setData({ ...data, businessIncome: { ...data.businessIncome, types: { ...data.businessIncome.types, [opt.id]: e.target.checked } } })} /><opt.icon size={24}/><span className="font-bold">{opt.label}</span></label>))}</div><button onClick={() => setData({...data, businessIncome: { ...data.businessIncome, configSet: true }})} disabled={!Object.values(data.businessIncome.types).some(Boolean)} className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-200">Comenzar</button></div></div>
+                                            <div className="flex justify-center">
+                                                <div className="bg-white p-8 rounded-3xl shadow-lg border border-emerald-100 max-w-md w-full">
+                                                    <div className="flex justify-center mb-6"><div className="p-4 bg-emerald-100 rounded-full text-emerald-600"><TrendingUp size={40}/></div></div>
+                                                    <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">Configura tus Ingresos</h2>
+                                                    <p className="text-center text-gray-500 text-sm mb-8">¿Qué tipo de ingresos recibes?</p>
+                                                    <div className="space-y-4 mb-8">
+                                                        {[{ id: 'products', label: 'Venta de Productos', icon: Package }, { id: 'workshops', label: 'Talleres / Capacitaciones', icon: Presentation }, { id: 'supplies', label: 'Venta de Insumos', icon: Store }].map(opt => (
+                                                            <label key={opt.id} className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${data.businessIncome.types[opt.id] ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                                                                <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={data.businessIncome.types[opt.id]} onChange={(e) => setData({ ...data, businessIncome: { ...data.businessIncome, types: { ...data.businessIncome.types, [opt.id]: e.target.checked } } })} />
+                                                                <opt.icon size={24}/>
+                                                                <span className="font-bold">{opt.label}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                    <button onClick={() => setData({...data, businessIncome: { ...data.businessIncome, configSet: true }})} disabled={!Object.values(data.businessIncome.types).some(Boolean)} className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-200">Comenzar</button>
+                                                </div>
+                                            </div>
                                         ) : (
                                             <>
                                                 <div className="mb-4 flex justify-between items-end bg-emerald-600 rounded-[2rem] p-8 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
@@ -534,9 +1198,68 @@
                                                     <div className="relative z-10">{!isReadOnly && <button onClick={() => setData({...data, businessIncome: {...data.businessIncome, configSet: false}})} className="text-xs text-emerald-200 hover:text-white bg-black/20 px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors"><Settings size={12}/> Configurar</button>}</div>
                                                     <div className="absolute right-0 bottom-0 p-4 opacity-10"><TrendingUp size={200}/></div>
                                                 </div>
-                                                {data.businessIncome.types.products && (<SectionCard title="Venta de Productos" icon={Package} total={bizProductsTotal} colorClass="bg-white" headerClass="bg-blue-50 text-blue-800" readOnly={isReadOnly}>{data.businessIncome.items.products.map(i => (<div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span className="text-sm font-medium text-gray-700">{i.name}</span><div className="flex items-center gap-2"><span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>{!isReadOnly && <button onClick={() => updateBizList('products', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}</div></div>))}{!isReadOnly && <AddItemRow placeholder="Producto..." name={newBizProduct.name} amount={newBizProduct.amount} onNameChange={e=>setNewBizProduct({...newBizProduct, name:e.target.value})} onAmountChange={val=>setNewBizProduct({...newBizProduct, amount:val})} onAdd={() => { if(!newBizProduct.name || !newBizProduct.amount) return; updateBizList('products', l => [...l, {id: Date.now(), name: newBizProduct.name, amount: Number(newBizProduct.amount)}]); setNewBizProduct({name:'', amount:''}); }} />}</SectionCard>)}
-                                                {data.businessIncome.types.workshops && (<SectionCard title="Talleres / Capacitaciones" icon={Presentation} total={bizWorkshopsTotal} colorClass="bg-white" headerClass="bg-purple-50 text-purple-800" readOnly={isReadOnly}>{data.businessIncome.items.workshops.map(i => (<div key={i.id} className="py-3 border-b border-gray-50 last:border-0"><div className="flex justify-between items-start mb-1"><span className="text-sm font-bold text-gray-700">{i.name}</span>{!isReadOnly && <button onClick={() => updateBizList('workshops', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}</div><div className="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg"><div>{formatCurrency(i.pricePerPerson)} x {i.count} pers.</div><div className="font-bold text-purple-600 text-sm">{formatCurrency(i.pricePerPerson * i.count)}</div></div></div>))}{!isReadOnly && (<div className="mt-2 p-3 border border-dashed border-purple-200 rounded-xl bg-purple-50/30"><input className="w-full bg-transparent text-sm font-medium outline-none placeholder-gray-400 mb-2" placeholder="Nombre Taller..." value={newBizWorkshop.name} onChange={e => setNewBizWorkshop({...newBizWorkshop, name: e.target.value})} /><div className="flex gap-2"><div className="relative flex-1"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span><CurrencyInput className="w-full bg-white border border-gray-200 rounded-lg pl-4 pr-2 py-1.5 text-xs outline-none focus:border-purple-400" placeholder="Valor p/p" value={newBizWorkshop.price} onChange={val => setNewBizWorkshop({...newBizWorkshop, price: val})} /></div><div className="relative w-20"><input type="number" className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-400 text-center" placeholder="N° Pers" value={newBizWorkshop.count} onChange={e => setNewBizWorkshop({...newBizWorkshop, count: e.target.value})} /></div><button onClick={() => { if(!newBizWorkshop.name || !newBizWorkshop.price || !newBizWorkshop.count) return; updateBizList('workshops', l => [...l, {id: Date.now(), name: newBizWorkshop.name, pricePerPerson: Number(newBizWorkshop.price), count: Number(newBizWorkshop.count)}]); setNewBizWorkshop({name:'', price:'', count:''}); }} className="bg-purple-600 text-white rounded-lg px-3 hover:bg-purple-700"><Plus size={16}/></button></div></div>)}</SectionCard>)}
-                                                {data.businessIncome.types.supplies && (<SectionCard title="Venta de Insumos" icon={Store} total={bizSuppliesTotal} colorClass="bg-white" headerClass="bg-orange-50 text-orange-800" readOnly={isReadOnly}>{data.businessIncome.items.supplies.map(i => (<div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span className="text-sm font-medium text-gray-700">{i.name}</span><div className="flex items-center gap-2"><span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>{!isReadOnly && <button onClick={() => updateBizList('supplies', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}</div></div>))}{!isReadOnly && <AddItemRow placeholder="Insumo..." name={newBizSupply.name} amount={newBizSupply.amount} onNameChange={e=>setNewBizSupply({...newBizSupply, name:e.target.value})} onAmountChange={val=>setNewBizSupply({...newBizSupply, amount:val})} onAdd={() => { if(!newBizSupply.name || !newBizSupply.amount) return; updateBizList('supplies', l => [...l, {id: Date.now(), name: newBizSupply.name, amount: Number(newBizSupply.amount)}]); setNewBizSupply({name:'', amount:''}); }} />}</SectionCard>)}
+                                                
+                                                {data.businessIncome.types.products && (
+                                                    <SectionCard title="Venta de Productos" icon={Package} total={bizProductsTotal} colorClass="bg-white" headerClass="bg-blue-50 text-blue-800" readOnly={isReadOnly}>
+                                                        {data.businessIncome.items.products.map(i => (
+                                                            <div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                                                                <span className="text-sm font-medium text-gray-700">{i.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>
+                                                                    {!isReadOnly && <button onClick={() => updateBizList('products', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {!isReadOnly && <AddItemRow placeholder="Producto..." name={newBizProduct.name} amount={newBizProduct.amount} onNameChange={e=>setNewBizProduct({...newBizProduct, name:e.target.value})} onAmountChange={val=>setNewBizProduct({...newBizProduct, amount:val})} onAdd={() => { if(!newBizProduct.name || !newBizProduct.amount) return; updateBizList('products', l => [...l, {id: Date.now(), name: newBizProduct.name, amount: Number(newBizProduct.amount)}]); setNewBizProduct({name:'', amount:''}); }} />}
+                                                    </SectionCard>
+                                                )}
+
+                                                {data.businessIncome.types.workshops && (
+                                                    <SectionCard title="Talleres / Capacitaciones" icon={Presentation} total={bizWorkshopsTotal} colorClass="bg-white" headerClass="bg-purple-50 text-purple-800" readOnly={isReadOnly}>
+                                                        {data.businessIncome.items.workshops.map(i => (
+                                                            <div key={i.id} className="py-3 border-b border-gray-50 last:border-0">
+                                                                <div className="flex justify-between items-start mb-1">
+                                                                    <span className="text-sm font-bold text-gray-700">{i.name}</span>
+                                                                    {!isReadOnly && <button onClick={() => updateBizList('workshops', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}
+                                                                </div>
+                                                                <div className="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
+                                                                    <div>{formatCurrency(i.pricePerPerson)} x {i.count} pers.</div>
+                                                                    <div className="font-bold text-purple-600 text-sm">{formatCurrency(i.pricePerPerson * i.count)}</div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {!isReadOnly && (
+                                                            <div className="mt-2 p-3 border border-dashed border-purple-200 rounded-xl bg-purple-50/30">
+                                                                <input className="w-full bg-transparent text-sm font-medium outline-none placeholder-gray-400 mb-2" placeholder="Nombre Taller..." value={newBizWorkshop.name} onChange={e => setNewBizWorkshop({...newBizWorkshop, name: e.target.value})} />
+                                                                <div className="flex gap-2">
+                                                                    <div className="relative flex-1">
+                                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">$</span>
+                                                                        <CurrencyInput className="w-full bg-white border border-gray-200 rounded-lg pl-4 pr-2 py-1.5 text-xs outline-none focus:border-purple-400" placeholder="Valor p/p" value={newBizWorkshop.price} onChange={val => setNewBizWorkshop({...newBizWorkshop, price: val})} />
+                                                                    </div>
+                                                                    <div className="relative w-20">
+                                                                        <input type="number" className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-purple-400 text-center" placeholder="N° Pers" value={newBizWorkshop.count} onChange={e => setNewBizWorkshop({...newBizWorkshop, count: e.target.value})} />
+                                                                    </div>
+                                                                    <button onClick={() => { if(!newBizWorkshop.name || !newBizWorkshop.price || !newBizWorkshop.count) return; updateBizList('workshops', l => [...l, {id: Date.now(), name: newBizWorkshop.name, pricePerPerson: Number(newBizWorkshop.price), count: Number(newBizWorkshop.count)}]); setNewBizWorkshop({name:'', price:'', count:''}); }} className="bg-purple-600 text-white rounded-lg px-3 hover:bg-purple-700"><Plus size={16}/></button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </SectionCard>
+                                                )}
+
+                                                {data.businessIncome.types.supplies && (
+                                                    <SectionCard title="Venta de Insumos" icon={Store} total={bizSuppliesTotal} colorClass="bg-white" headerClass="bg-orange-50 text-orange-800" readOnly={isReadOnly}>
+                                                        {data.businessIncome.items.supplies.map(i => (
+                                                            <div key={i.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                                                                <span className="text-sm font-medium text-gray-700">{i.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-gray-800">{formatCurrency(i.amount)}</span>
+                                                                    {!isReadOnly && <button onClick={() => updateBizList('supplies', l => l.filter(x => x.id !== i.id))} className="text-gray-300 hover:text-red-500"><Trash2 size={14}/></button>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {!isReadOnly && <AddItemRow placeholder="Insumo..." name={newBizSupply.name} amount={newBizSupply.amount} onNameChange={e=>setNewBizSupply({...newBizSupply, name:e.target.value})} onAmountChange={val=>setNewBizSupply({...newBizSupply, amount:val})} onAdd={() => { if(!newBizSupply.name || !newBizSupply.amount) return; updateBizList('supplies', l => [...l, {id: Date.now(), name: newBizSupply.name, amount: Number(newBizSupply.amount)}]); setNewBizSupply({name:'', amount:''}); }} />}
+                                                    </SectionCard>
+                                                )}
                                             </>
                                         )}
                                     </div>
