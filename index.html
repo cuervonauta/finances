@@ -165,7 +165,6 @@
                 // Simulación de delay de red para Google Auth
                 setTimeout(() => {
                     const mockUser = {
-                        // name: "Usuario Google", // Ya no forzamos el nombre aquí
                         email: "usuario@gmail.com",
                         photo: null
                     };
@@ -379,6 +378,26 @@
                 </div>
             </button>
         );
+
+        // --- COMPONENTE FALTANTE AGREGADO: ProgressBar ---
+        const ProgressBar = ({ label, value, total, colorClass }) => {
+            const percentage = total > 0 ? Math.min((value / total) * 100, 100) : 0;
+            return (
+                <div className="mt-2">
+                    <div className="flex justify-between text-xs mb-1">
+                        <span className="font-bold text-gray-600">{label}</span>
+                        <span className="text-gray-400">{Math.round(percentage)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div className={`h-full rounded-full ${colorClass}`} style={{ width: `${percentage}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] mt-1 text-gray-400">
+                        <span>{formatCurrency(value)}</span>
+                        <span>{formatCurrency(total)}</span>
+                    </div>
+                </div>
+            );
+        };
 
         // Componentes genéricos 
         const CurrencyInput = ({ value, onChange, className, placeholder, disabled, autoFocus }) => {
@@ -840,7 +859,15 @@
                 if(!window.confirm("¿Reiniciar valores?")) return; 
                 
                 const zeroList = (list) => list.map(i => ({...i, amount: 0, paid: false})); 
-                const zeroCards = (list) => list.map(i => ({...i, monthlyQuota: 0, payedAmount: 0, status: 'pending'})); 
+                // CORRECCIÓN LÓGICA: Resetear tarjetas correctamente (para líneas de crédito también)
+                const zeroCards = (list) => list.map(i => {
+                    const base = {...i, monthlyQuota: 0, payedAmount: 0, status: 'pending'};
+                    if (i.type === 'linea') {
+                         // Opcional: Si quieres reiniciar el uso de la línea también
+                         return { ...base, totalDebt: 0 };
+                    }
+                    return base;
+                }); 
                 const zeroModules = (modules) => modules.map(m => ({ ...m, items: m.items.map(i => ({...i, amount: 0, paid: false})) })); 
                 const zeroBiz = { ...data.businessIncome, items: { products: [], workshops: [], supplies: [] } };
                 
@@ -889,6 +916,9 @@
             };
 
             const updateUser = (key, val) => { setData(prev => ({ ...prev, userSettings: { ...prev.userSettings, [key]: val } })); };
+            
+            // CORRECCIÓN: Función delItem para borrar items correctamente
+            const delItem = (k, id) => updateList(k, l => l.filter(i => i.id !== id));
 
             useEffect(() => {
                 const sessionStr = localStorage.getItem('finance_user_session'); 
@@ -1036,7 +1066,6 @@
             const togglePaid = (k, id) => updateList(k, l => l.map(i => i.id === id ? {...i, paid: !i.paid} : i));
             const updateAmount = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, amount: v} : i));
             const updateName = (k, id, v) => updateList(k, l => l.map(i => i.id === id ? {...i, name: v} : i));
-            const delItem = (k, id) => updateList(k, l => l.filter(i => i.id !== id));
             
             const addItem = (k, state, setState) => { 
                 if(!state.name || !state.amount || isReadOnly) return; 
@@ -1276,7 +1305,7 @@
                                     <div className="md:max-w-[720px] md:mx-auto">
                                         <SectionCard title="Gestión de Tarjetas" icon={CreditCard} total={totals.creditCards} headerClass={`text-rose-800 ${isReadOnly ? 'bg-gray-200 text-gray-600' : 'bg-rose-50'}`} readOnly={isReadOnly}>
                                             <div className="space-y-6 mt-4">
-                                                {uniqueBanks.map(bank => { const bankItems = (data.creditCards || []).filter(item => item.bank === bank); return (<div key={bank} className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden h-full flex flex-col"><div className="bg-rose-50/50 px-4 py-3 border-b border-rose-100 flex justify-between items-center"><h4 className="text-xs font-bold text-rose-900 uppercase tracking-widest flex items-center gap-2"><Building2 size={14} className="text-rose-400"/> {bank}</h4>{!isReadOnly && <button onClick={() => { if(window.confirm(`¿Eliminar ${bank}?`)) updateList('creditCards', list => list.filter(c => c.bank !== bank)) }} className="text-rose-300 hover:text-rose-600"><Trash2 size={16} /></button>}</div><div className="px-4 py-3 flex-1">{bankItems.map(item => (<DetailedCreditCardRow key={item.id} item={item} readOnly={isReadOnly} onUpdate={(field, val) => updateCard(item.id, field, val)} onDelete={() => deleteItem('creditCards', item.id)}/>))}</div></div>) })}
+                                                {uniqueBanks.map(bank => { const bankItems = (data.creditCards || []).filter(item => item.bank === bank); return (<div key={bank} className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden h-full flex flex-col"><div className="bg-rose-50/50 px-4 py-3 border-b border-rose-100 flex justify-between items-center"><h4 className="text-xs font-bold text-rose-900 uppercase tracking-widest flex items-center gap-2"><Building2 size={14} className="text-rose-400"/> {bank}</h4>{!isReadOnly && <button onClick={() => { if(window.confirm(`¿Eliminar ${bank}?`)) updateList('creditCards', list => list.filter(c => c.bank !== bank)) }} className="text-rose-300 hover:text-rose-600"><Trash2 size={16} /></button>}</div><div className="px-4 py-3 flex-1">{bankItems.map(item => (<DetailedCreditCardRow key={item.id} item={item} readOnly={isReadOnly} onUpdate={(field, val) => updateCard(item.id, field, val)} onDelete={() => delItem('creditCards', item.id)}/>))}</div></div>) })}
                                                 {!isAddingBank && !isReadOnly && (<button onClick={() => setIsAddingBank(true)} className="w-full min-h-[100px] border-2 border-dashed border-rose-200 rounded-xl text-rose-400 font-bold text-sm hover:bg-rose-50 transition flex flex-col items-center justify-center gap-2"><Plus size={24} /> Agregar Banco</button>)}
                                                 {isAddingBank && (<div className="bg-gray-50 p-4 rounded-xl border border-gray-200 h-full"><h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Nuevo Banco</h4><input autoFocus className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3 focus:outline-none focus:border-rose-500" placeholder="Nombre (Ej. Scotiabank)" value={newBankName} onChange={(e) => setNewBankName(e.target.value)}/><div className="flex flex-wrap gap-2 mb-4"><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.pesos} onChange={e => setNewBankTypes({...newBankTypes, pesos: e.target.checked})} className="accent-rose-500"/> TC Pesos</label><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.dolares} onChange={e => setNewBankTypes({...newBankTypes, dolares: e.target.checked})} className="accent-rose-500"/> TC Dólares</label><label className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm cursor-pointer hover:border-rose-300"><input type="checkbox" checked={newBankTypes.linea} onChange={e => setNewBankTypes({...newBankTypes, linea: e.target.checked})} className="accent-rose-500"/> Línea</label></div><div className="flex gap-2"><button onClick={addBank} className="flex-1 bg-rose-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-rose-700">Guardar</button><button onClick={() => setIsAddingBank(false)} className="px-4 text-gray-500 text-sm hover:text-gray-800">Cancelar</button></div></div>)}
                                             </div>
